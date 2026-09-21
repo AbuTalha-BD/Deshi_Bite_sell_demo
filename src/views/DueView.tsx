@@ -60,22 +60,32 @@ export const DueView: React.FC = () => {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">
-              {isAdmin ? 'Total Outstanding Due' : 'My Current Due Balance'}
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
-              <DollarSign className="w-4 h-4" />
+        {(() => {
+          const dueVal = isAdmin ? totalSystemDue : (currentUser?.currentDue || 0);
+          const isAdvance = dueVal < 0;
+          return (
+            <div className={`bg-white p-5 rounded-2xl border ${isAdvance ? 'border-emerald-100 shadow-emerald-50/50' : 'border-rose-100'} shadow-xs`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${isAdvance ? 'text-emerald-700' : 'text-rose-600'}`}>
+                  {isAdmin
+                    ? isAdvance ? 'Total Advance Balance' : 'Total Outstanding Due'
+                    : isAdvance ? 'My Advance Balance' : 'My Current Due Balance'}
+                </span>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isAdvance ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                  <DollarSign className="w-4 h-4" />
+                </div>
+              </div>
+              <div className={`text-2xl sm:text-3xl font-extrabold ${isAdvance ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {isAdvance ? `-৳${Math.abs(dueVal).toLocaleString()}` : `৳${dueVal.toLocaleString()}`}
+              </div>
+              <p className="text-[11px] text-slate-600 mt-1">
+                {isAdmin
+                  ? isAdvance ? `Advance credited from executives` : `Payable across ${agentUsers.length} sales executives`
+                  : isAdvance ? 'Advance credit deposited to Admin (offsets next sales)' : 'Payable to Admin for sold inventory'}
+              </p>
             </div>
-          </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-rose-600">
-            ৳{(isAdmin ? totalSystemDue : currentUser?.currentDue || 0).toLocaleString()}
-          </div>
-          <p className="text-[11px] text-slate-600 mt-1">
-            {isAdmin ? `Payable across ${agentUsers.length} sales executives` : 'Payable to Admin for sold inventory'}
-          </p>
-        </div>
+          );
+        })()}
 
         <div className="bg-white p-5 rounded-2xl border border-purple-100/80 shadow-xs">
           <div className="flex items-center justify-between mb-2">
@@ -106,6 +116,8 @@ export const DueView: React.FC = () => {
           <div className="text-xl sm:text-2xl font-extrabold text-slate-900">
             {isAdmin
               ? 'Reconciliation Active'
+              : (currentUser?.currentDue || 0) < 0
+              ? 'Advance Balance Active'
               : (currentUser?.currentDue || 0) > 0
               ? 'Due Settlement Pending'
               : 'Account Good Standing'}
@@ -113,6 +125,8 @@ export const DueView: React.FC = () => {
           <p className="text-[11px] text-slate-600 mt-1">
             {isAdmin
               ? 'Double-entry ledger accuracy'
+              : (currentUser?.currentDue || 0) < 0
+              ? 'Advance balance will deduct from future sales'
               : (currentUser?.currentDue || 0) > 0
               ? 'Outstanding balance payable to Admin'
               : 'Zero outstanding dues'}
@@ -157,9 +171,11 @@ export const DueView: React.FC = () => {
 
                 <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-50">
                   <div>
-                    <span className="text-slate-500 block text-[10px] uppercase font-semibold">Outstanding Due</span>
-                    <span className="font-extrabold text-rose-600 text-base">
-                      ৳{agent.currentDue.toLocaleString()}
+                    <span className="text-slate-500 block text-[10px] uppercase font-semibold">
+                      {agent.currentDue < 0 ? 'Advance Balance' : 'Outstanding Due'}
+                    </span>
+                    <span className={`font-extrabold text-base ${agent.currentDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {agent.currentDue < 0 ? `-৳${Math.abs(agent.currentDue).toLocaleString()} (Advance)` : `৳${agent.currentDue.toLocaleString()}`}
                     </span>
                   </div>
                   <button
@@ -183,7 +199,7 @@ export const DueView: React.FC = () => {
                   <th className="py-3 px-4">Contact Phone</th>
                   <th className="py-3 px-4">Address</th>
                   <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Outstanding Due</th>
+                  <th className="py-3 px-4 text-right">Outstanding / Advance</th>
                   <th className="py-3 px-4 text-center">Action</th>
                 </tr>
               </thead>
@@ -208,8 +224,10 @@ export const DueView: React.FC = () => {
                         {agent.status}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right font-extrabold text-rose-600 text-sm">
-                      ৳{agent.currentDue.toLocaleString()}
+                    <td className={`py-3 px-4 text-right font-extrabold text-sm ${
+                      agent.currentDue < 0 ? 'text-emerald-600' : 'text-rose-600'
+                    }`}>
+                      {agent.currentDue < 0 ? `-৳${Math.abs(agent.currentDue).toLocaleString()} (Advance)` : `৳${agent.currentDue.toLocaleString()}`}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button

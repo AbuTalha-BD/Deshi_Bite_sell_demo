@@ -61,10 +61,16 @@ export const AgentsView: React.FC = () => {
           <p className="text-[11px] text-slate-600 mt-0.5">Awaiting Administrator review</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-xs">
-          <span className="text-[11px] font-bold text-rose-600 uppercase">Total Outstanding Due</span>
-          <div className="text-2xl font-extrabold text-rose-600 mt-1">৳{totalDue.toLocaleString()}</div>
-          <p className="text-[11px] text-slate-600 mt-0.5">Cumulative executive balance</p>
+        <div className={`bg-white p-4 rounded-2xl border ${totalDue < 0 ? 'border-emerald-100' : 'border-rose-100'} shadow-xs`}>
+          <span className={`text-[11px] font-bold uppercase ${totalDue < 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+            {totalDue < 0 ? 'Total Advance Balance' : 'Total Outstanding Due'}
+          </span>
+          <div className={`text-2xl font-extrabold mt-1 ${totalDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {totalDue < 0 ? `-৳${Math.abs(totalDue).toLocaleString()}` : `৳${totalDue.toLocaleString()}`}
+          </div>
+          <p className="text-[11px] text-slate-600 mt-0.5">
+            {totalDue < 0 ? 'Advance credit across executives' : 'Cumulative executive balance'}
+          </p>
         </div>
       </div>
 
@@ -91,9 +97,95 @@ export const AgentsView: React.FC = () => {
         ))}
       </div>
 
-      {/* Agents Table */}
+      {/* Agents List / Table */}
       <div className="bg-white rounded-3xl border border-purple-100/80 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Card View */}
+        <div className="block sm:hidden divide-y divide-slate-100">
+          {agentUsers.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 text-xs">No sales executives found.</div>
+          ) : (
+            agentUsers.map((agent) => (
+              <div key={agent.id} className="p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900">{agent.name}</h3>
+                    <p className="text-xs text-slate-600 font-mono">{agent.phone}</p>
+                    <p className="text-[11px] text-slate-500">{agent.address || 'Dhaka, Bangladesh'}</p>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      agent.status === 'ACTIVE'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : agent.status === 'PENDING'
+                        ? 'bg-amber-100 text-amber-800 animate-pulse'
+                        : 'bg-rose-100 text-rose-800'
+                    }`}
+                  >
+                    {agent.status}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-50 text-xs">
+                  <div>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block">
+                      {agent.currentDue < 0 ? 'Advance Balance' : 'Current Due'}
+                    </span>
+                    <span className={`font-extrabold text-base ${agent.currentDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {agent.currentDue < 0 ? `-৳${Math.abs(agent.currentDue).toLocaleString()} (Advance)` : `৳${agent.currentDue.toLocaleString()}`}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {agent.status === 'PENDING' ? (
+                      <>
+                        <button
+                          onClick={() => updateAgentStatus(agent.id, 'ACTIVE')}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => setAgentToReject(agent)}
+                          className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs border border-rose-200"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    ) : agent.status === 'ACTIVE' ? (
+                      <>
+                        <button
+                          onClick={() => {
+                            setSelectedAgentForPayment(agent);
+                            setIsPaymentModalOpen(true);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 font-bold text-xs border border-purple-200"
+                        >
+                          Payment
+                        </button>
+                        <button
+                          onClick={() => updateAgentStatus(agent.id, 'SUSPENDED')}
+                          className="px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs"
+                        >
+                          Suspend
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => updateAgentStatus(agent.id, 'ACTIVE')}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs"
+                      >
+                        Re-activate
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
               <tr>
@@ -101,7 +193,7 @@ export const AgentsView: React.FC = () => {
                 <th className="py-3 px-4">Phone Number</th>
                 <th className="py-3 px-4">Address</th>
                 <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Current Due</th>
+                <th className="py-3 px-4 text-right">Outstanding / Advance</th>
                 <th className="py-3 px-4 text-center">Actions</th>
               </tr>
             </thead>
@@ -134,8 +226,10 @@ export const AgentsView: React.FC = () => {
                     </span>
                   </td>
 
-                  <td className="py-3 px-4 text-right font-extrabold text-rose-600 text-sm">
-                    ৳{agent.currentDue.toLocaleString()}
+                  <td className={`py-3 px-4 text-right font-extrabold text-sm ${
+                    agent.currentDue < 0 ? 'text-emerald-600' : 'text-rose-600'
+                  }`}>
+                    {agent.currentDue < 0 ? `-৳${Math.abs(agent.currentDue).toLocaleString()} (Advance)` : `৳${agent.currentDue.toLocaleString()}`}
                   </td>
 
                   <td className="py-3 px-4 text-center">

@@ -37,13 +37,13 @@ export const PaymentModal: React.FC = () => {
   const targetAgent = users.find((u) => u.id === selectedAgentId);
   const currentDue = targetAgent ? targetAgent.currentDue : 0;
   const numAmount = typeof paymentAmount === 'number' ? paymentAmount : 0;
-  const estimatedRemainingDue = Math.max(0, Number((currentDue - numAmount).toFixed(2)));
+  const estimatedRemainingDue = Number((currentDue - numAmount).toFixed(2));
 
   const handleQuickAmount = (type: 'full' | 'half') => {
     if (type === 'full') {
-      setPaymentAmount(currentDue);
+      setPaymentAmount(currentDue > 0 ? currentDue : 0);
     } else {
-      setPaymentAmount(Number((currentDue / 2).toFixed(2)));
+      setPaymentAmount(currentDue > 0 ? Number((currentDue / 2).toFixed(2)) : 0);
     }
   };
 
@@ -105,7 +105,7 @@ export const PaymentModal: React.FC = () => {
                 onChange={(e) => {
                   setSelectedAgentId(e.target.value);
                   const a = users.find((u) => u.id === e.target.value);
-                  if (a) setPaymentAmount(a.currentDue);
+                  if (a) setPaymentAmount(a.currentDue > 0 ? a.currentDue : 0);
                 }}
                 className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-white"
               >
@@ -113,7 +113,7 @@ export const PaymentModal: React.FC = () => {
                   .filter((u) => u.role === 'AGENT')
                   .map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.name} ({a.phone}) — Due: ৳{a.currentDue.toLocaleString()}
+                      {a.name} ({a.phone}) — {a.currentDue < 0 ? `Advance: ৳${Math.abs(a.currentDue).toLocaleString()}` : `Due: ৳${a.currentDue.toLocaleString()}`}
                     </option>
                   ))}
               </select>
@@ -124,7 +124,9 @@ export const PaymentModal: React.FC = () => {
           <div className="p-4 rounded-2xl bg-purple-50/40 border border-purple-100 space-y-2.5 text-xs">
             <div className="flex justify-between items-center">
               <span className="text-slate-600 font-medium">Current Outstanding Due:</span>
-              <span className="font-extrabold text-rose-600 text-sm">৳{currentDue.toLocaleString()}</span>
+              <span className={`font-extrabold text-sm ${currentDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {currentDue < 0 ? `-৳${Math.abs(currentDue).toLocaleString()} (Advance)` : `৳${currentDue.toLocaleString()}`}
+              </span>
             </div>
 
             <div className="flex justify-between items-center">
@@ -136,10 +138,18 @@ export const PaymentModal: React.FC = () => {
 
             <div className="flex justify-between items-center border-t border-purple-200/50 pt-2 font-bold">
               <span className="text-slate-900">Estimated Remaining Due:</span>
-              <span className="text-purple-900 font-extrabold text-base">
-                ৳{estimatedRemainingDue.toLocaleString()}
+              <span className={`font-extrabold text-base ${estimatedRemainingDue < 0 ? 'text-emerald-700' : 'text-purple-900'}`}>
+                {estimatedRemainingDue < 0
+                  ? `-৳${Math.abs(estimatedRemainingDue).toLocaleString()} (Advance)`
+                  : `৳${estimatedRemainingDue.toLocaleString()}`}
               </span>
             </div>
+
+            {estimatedRemainingDue < 0 && (
+              <div className="text-[11px] text-emerald-800 bg-emerald-50 rounded-xl p-2 border border-emerald-200 font-medium">
+                💡 Executive is paying <strong>৳{Math.abs(estimatedRemainingDue).toLocaleString()}</strong> in advance. This advance will automatically adjust against their next sales.
+              </div>
+            )}
           </div>
 
           {/* Quick Amount Chips */}
@@ -150,7 +160,7 @@ export const PaymentModal: React.FC = () => {
               onClick={() => handleQuickAmount('full')}
               className="px-2.5 py-1 text-xs font-bold rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-800 transition-colors cursor-pointer"
             >
-              Full Due (৳{currentDue.toLocaleString()})
+              Full Due ({currentDue < 0 ? `-৳${Math.abs(currentDue).toLocaleString()}` : `৳${currentDue.toLocaleString()}`})
             </button>
             <button
               type="button"

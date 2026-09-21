@@ -886,7 +886,7 @@ export async function createExpressApp() {
     }
 
     const previousDue = agent.currentDue;
-    const remainingDue = Math.max(0, Number((previousDue - numAmount).toFixed(2)));
+    const remainingDue = Number((previousDue - numAmount).toFixed(2));
 
     agent.totalPaid = Number((agent.totalPaid + numAmount).toFixed(2));
     agent.currentDue = remainingDue;
@@ -912,10 +912,14 @@ export async function createExpressApp() {
     db.payments.unshift(paymentRecord);
 
     // Notify Agent
+    const dueNotificationText = remainingDue < 0
+      ? `Admin recorded payment of ৳${numAmount.toLocaleString()}. Your account now has an advance balance of ৳${Math.abs(remainingDue).toLocaleString()} (Due: -৳${Math.abs(remainingDue).toLocaleString()}). Next sales will automatically deduct from this balance.`
+      : `Admin recorded payment of ৳${numAmount.toLocaleString()}. Your remaining due is now ৳${remainingDue.toLocaleString()}.`;
+
     db.notifications.unshift({
       id: `NOTIF-${Date.now()}`,
-      title: 'Payment Received & Due Updated',
-      message: `Admin recorded payment of ৳${numAmount.toLocaleString()}. Your remaining due is now ৳${remainingDue.toLocaleString()}.`,
+      title: remainingDue < 0 ? 'Advance Payment Recorded' : 'Payment Received & Due Updated',
+      message: dueNotificationText,
       type: 'SUCCESS',
       isRead: false,
       date: dt.date,
@@ -932,7 +936,7 @@ export async function createExpressApp() {
       role: 'ADMIN',
       action: 'Payment Recorded',
       referenceId: paymentRecord.id,
-      details: `Received ৳${numAmount.toLocaleString()} from ${agent.name}. Remaining due: ৳${remainingDue.toLocaleString()}`,
+      details: `Received ৳${numAmount.toLocaleString()} from ${agent.name}. Remaining due: ${remainingDue < 0 ? `-৳${Math.abs(remainingDue).toLocaleString()} (Advance)` : `৳${remainingDue.toLocaleString()}`}`,
       date: dt.date,
       time: dt.time,
       timestamp: dt.timestamp,

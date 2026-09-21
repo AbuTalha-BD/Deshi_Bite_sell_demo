@@ -142,9 +142,12 @@ export const StatCards: React.FC = () => {
               <span className="font-extrabold text-slate-900 select-none">৳</span>
               <span>{weekSales.toLocaleString()}</span>
             </div>
-            <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight truncate" title={`Sat – Fri (${formattedRange})`}>
-              Sat – Fri ({formattedRange})
-            </p>
+            <div className="text-[11px] sm:text-xs text-slate-500 font-medium leading-snug mt-1" title={`Sat – Fri (${formattedRange})`}>
+              <span className="font-semibold text-slate-700 block sm:inline">Sat – Fri</span>
+              <span className="text-[10px] sm:text-xs text-slate-500 block sm:inline sm:ml-1">
+                ({formattedRange})
+              </span>
+            </div>
           </div>
 
           {/* This Month */}
@@ -185,20 +188,32 @@ export const StatCards: React.FC = () => {
         {/* Row 2: Operational Status Metrics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Total Due */}
-          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-rose-100 shadow-[0_4px_20px_-4px_rgba(244,63,94,0.08)] hover:shadow-md transition-all duration-200">
+          <div className={`bg-white rounded-3xl p-4 sm:p-6 border ${
+            totalDueAcrossAgents < 0 ? 'border-emerald-100 shadow-[0_4px_20px_-4px_rgba(16,185,129,0.08)]' : 'border-rose-100 shadow-[0_4px_20px_-4px_rgba(244,63,94,0.08)]'
+          } hover:shadow-md transition-all duration-200`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] sm:text-xs font-bold text-rose-600 uppercase tracking-wider">
-                TOTAL DUE
+              <span className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider ${
+                totalDueAcrossAgents < 0 ? 'text-emerald-700' : 'text-rose-600'
+              }`}>
+                {totalDueAcrossAgents < 0 ? 'TOTAL ADVANCE' : 'TOTAL DUE'}
               </span>
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                totalDueAcrossAgents < 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+              }`}>
                 <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-rose-600 tracking-tight flex items-baseline gap-1 my-1">
-              <span className="font-extrabold text-rose-600 select-none">৳</span>
-              <span>{totalDueAcrossAgents.toLocaleString()}</span>
+            <div className={`text-2xl sm:text-3xl lg:text-[32px] font-black tracking-tight flex items-baseline gap-1 my-1 ${
+              totalDueAcrossAgents < 0 ? 'text-emerald-600' : 'text-rose-600'
+            }`}>
+              <span className="font-extrabold select-none">
+                {totalDueAcrossAgents < 0 ? '-৳' : '৳'}
+              </span>
+              <span>{Math.abs(totalDueAcrossAgents).toLocaleString()}</span>
             </div>
-            <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">Executive outstanding payable</p>
+            <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">
+              {totalDueAcrossAgents < 0 ? 'Advance balance with Admin' : 'Executive outstanding payable'}
+            </p>
           </div>
 
           {/* Total Agents */}
@@ -303,9 +318,12 @@ export const StatCards: React.FC = () => {
           <span className="font-extrabold text-slate-900 select-none">৳</span>
           <span>{weekSales.toLocaleString()}</span>
         </div>
-        <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight truncate" title={`Sat – Fri (${formattedRange})`}>
-          Sat – Fri ({formattedRange})
-        </p>
+        <div className="text-[11px] sm:text-xs text-slate-500 font-medium leading-snug mt-1" title={`Sat – Fri (${formattedRange})`}>
+          <span className="font-semibold text-slate-700 block sm:inline">Sat – Fri</span>
+          <span className="text-[10px] sm:text-xs text-slate-500 block sm:inline sm:ml-1">
+            ({formattedRange})
+          </span>
+        </div>
       </div>
 
       {/* This Month */}
@@ -326,20 +344,32 @@ export const StatCards: React.FC = () => {
       </div>
 
       {/* Current Due */}
-      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-rose-100 shadow-[0_4px_20px_-4px_rgba(244,63,94,0.08)] hover:shadow-md transition-all duration-200">
+      <div className={`bg-white rounded-3xl p-4 sm:p-6 border ${
+        agentPersonalDue < 0 ? 'border-emerald-100 shadow-[0_4px_20px_-4px_rgba(16,185,129,0.08)]' : 'border-rose-100 shadow-[0_4px_20px_-4px_rgba(244,63,94,0.08)]'
+      } hover:shadow-md transition-all duration-200`}>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] sm:text-xs font-bold text-rose-600 uppercase tracking-wider">
-            CURRENT DUE
+          <span className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider ${
+            agentPersonalDue < 0 ? 'text-emerald-700' : 'text-rose-600'
+          }`}>
+            {agentPersonalDue < 0 ? 'ADVANCE BALANCE' : 'CURRENT DUE'}
           </span>
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+          <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+            agentPersonalDue < 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+          }`}>
             <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
-        <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-rose-600 tracking-tight flex items-baseline gap-1 my-1">
-          <span className="font-extrabold text-rose-600 select-none">৳</span>
-          <span>{agentPersonalDue.toLocaleString()}</span>
+        <div className={`text-2xl sm:text-3xl lg:text-[32px] font-black tracking-tight flex items-baseline gap-1 my-1 ${
+          agentPersonalDue < 0 ? 'text-emerald-600' : 'text-rose-600'
+        }`}>
+          <span className="font-extrabold select-none">
+            {agentPersonalDue < 0 ? '-৳' : '৳'}
+          </span>
+          <span>{Math.abs(agentPersonalDue).toLocaleString()}</span>
         </div>
-        <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">Payable to Admin</p>
+        <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">
+          {agentPersonalDue < 0 ? 'Advance deposited to Admin' : 'Payable to Admin'}
+        </p>
       </div>
     </div>
   );
