@@ -148,7 +148,124 @@ export const ProductsView: React.FC = () => {
 
       {/* Table / Grid */}
       <div className="bg-white rounded-3xl border border-purple-100/80 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile View: Clean Card List (sm:hidden) */}
+        <div className="sm:hidden divide-y divide-slate-100">
+          {filteredProducts.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-500">No products found matching criteria.</div>
+          ) : (
+            filteredProducts.map((p) => {
+              const unit = getProductUnit(p);
+              const stockVal = getProductStockValue(p);
+              const thresholdVal = getProductThresholdValue(p);
+              const isLow = isProductLowStock(p);
+
+              return (
+                <div key={p.id} className="p-4 space-y-3 hover:bg-purple-50/20 transition-colors">
+                  {/* Card Header: Title and Status */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-extrabold text-slate-900 text-sm">{p.name}</div>
+                      {isLow && (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-bold mt-0.5">
+                          <AlertTriangle className="w-3 h-3 shrink-0" />
+                          <span>Low Stock Alert</span>
+                        </span>
+                      )}
+                    </div>
+                    <div className="shrink-0 flex items-center gap-1.5">
+                      {p.active ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Active</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                          <XCircle className="w-3 h-3" />
+                          <span>Inactive</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Pricing & Stock Grid */}
+                  <div className="grid grid-cols-3 gap-2 bg-slate-50/70 p-2.5 rounded-2xl border border-slate-100 text-xs">
+                    <div>
+                      <div className="text-[10px] text-slate-500 font-semibold">Retail (খুচরা)</div>
+                      <div className="font-bold text-purple-900 text-xs mt-0.5">
+                        {p.retailPriceKg
+                          ? `৳${p.retailPriceKg}/${unit}`
+                          : p.retailPricePcs
+                          ? `৳${p.retailPricePcs}/${unit}`
+                          : '—'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[10px] text-slate-500 font-semibold">Wholesale (পাইকারি)</div>
+                      <div className="font-bold text-indigo-900 text-xs mt-0.5">
+                        {p.wholesalePriceKg
+                          ? `৳${p.wholesalePriceKg}/${unit}`
+                          : p.wholesalePricePcs
+                          ? `৳${p.wholesalePricePcs}/${unit}`
+                          : '—'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[10px] text-slate-500 font-semibold">Stock</div>
+                      <div className="mt-0.5">
+                        <span
+                          className={`inline-block font-mono font-bold text-[11px] px-1.5 py-0.5 rounded-md ${
+                            isLow
+                              ? 'bg-amber-100 text-amber-900'
+                              : stockVal > 0
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-slate-200 text-slate-800'
+                          }`}
+                        >
+                          {stockVal} {unit}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons for Mobile */}
+                  <div className="pt-1">
+                    {isAdmin ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleEdit(p)}
+                          className="flex-1 inline-flex items-center justify-center gap-1 py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-purple-100 text-slate-700 hover:text-purple-800 font-bold text-xs transition-colors cursor-pointer"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit Product</span>
+                        </button>
+                        <button
+                          onClick={() => setProductToDelete(p)}
+                          className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors cursor-pointer"
+                          title={`Delete ${p.name}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setIsSellModalOpen(true)}
+                        className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        <span>Sell This Product</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop View: Full Data Table (hidden sm:block) */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
               <tr>

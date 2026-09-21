@@ -47,9 +47,12 @@ export const StatCards: React.FC = () => {
   }).format(new Date(currentTime));
 
   const isSaleToday = (s: Sale) => {
-    if (s.createdAtDate === todayDhaka) return true;
+    if (s.createdAtDate && s.createdAtDate.trim().toLowerCase() === todayDhaka.trim().toLowerCase()) return true;
     if (s.timestamp && !isNaN(s.timestamp)) {
-      return getDhakaYMD(s.timestamp) === todayYmd;
+      if (getDhakaYMD(s.timestamp) === todayYmd) return true;
+    }
+    if (s.createdAtDate) {
+      if (getDhakaYMD(s.createdAtDate) === todayYmd) return true;
     }
     return false;
   };
@@ -61,8 +64,14 @@ export const StatCards: React.FC = () => {
   // Current Week Sales (Bangladesh business calendar: Saturday to Friday)
   const { startDateYmd, endDateYmd, formattedRange } = getBangladeshWeekDays(0, currentTime);
   const isSaleThisWeek = (s: Sale) => {
-    const saleYmd = s.timestamp ? getDhakaYMD(s.timestamp) : getDhakaYMD(s.createdAtDate);
-    if (!saleYmd) return isSaleToday(s);
+    if (isSaleToday(s)) return true;
+    let saleYmd = '';
+    if (s.timestamp && !isNaN(s.timestamp)) {
+      saleYmd = getDhakaYMD(s.timestamp);
+    } else if (s.createdAtDate) {
+      saleYmd = getDhakaYMD(s.createdAtDate);
+    }
+    if (!saleYmd) return false;
     return saleYmd >= startDateYmd && saleYmd <= endDateYmd;
   };
 
@@ -72,7 +81,10 @@ export const StatCards: React.FC = () => {
 
   // Month Sales (current calendar month in Asia/Dhaka)
   const { yearMonthYm, fullMonthName } = getBangladeshMonthInfo(currentTime);
-  const isSaleThisMonth = (s: Sale) => isSaleInDhakaMonth(s, yearMonthYm, fullMonthName);
+  const isSaleThisMonth = (s: Sale) => {
+    if (isSaleToday(s)) return true;
+    return isSaleInDhakaMonth(s, yearMonthYm, fullMonthName);
+  };
 
   const monthSales = relevantSales
     .filter(isSaleThisMonth)
@@ -100,90 +112,109 @@ export const StatCards: React.FC = () => {
         {/* Row 1: Sales Revenue Metrics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Today's Sales */}
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-xs hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Today's Sales</span>
-              <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
-                <TrendingUp className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+                TODAY'S SALE
+              </span>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              ৳{todaySales.toLocaleString()}
+            <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-slate-900 tracking-tight flex items-baseline gap-1 my-1">
+              <span className="font-extrabold text-slate-900 select-none">৳</span>
+              <span>{todaySales.toLocaleString()}</span>
             </div>
-            <p className="text-[11px] text-slate-600 mt-1 font-medium">Daily gross total</p>
+            <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">Confirmed orders today</p>
           </div>
 
           {/* This Week */}
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-xs hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">This Week</span>
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                <Calendar className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+                THIS WEEK
+              </span>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              ৳{weekSales.toLocaleString()}
+            <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-slate-900 tracking-tight flex items-baseline gap-1 my-1">
+              <span className="font-extrabold text-slate-900 select-none">৳</span>
+              <span>{weekSales.toLocaleString()}</span>
             </div>
-            <p className="text-[11px] text-slate-600 mt-1 font-medium">Sat – Fri ({formattedRange})</p>
+            <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight truncate" title={`Sat – Fri (${formattedRange})`}>
+              Sat – Fri ({formattedRange})
+            </p>
           </div>
 
           {/* This Month */}
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-xs hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">This Month</span>
-              <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
-                <CalendarDays className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+                THIS MONTH
+              </span>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              ৳{monthSales.toLocaleString()}
+            <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-slate-900 tracking-tight flex items-baseline gap-1 my-1">
+              <span className="font-extrabold text-slate-900 select-none">৳</span>
+              <span>{monthSales.toLocaleString()}</span>
             </div>
-            <p className="text-[11px] text-slate-600 mt-1 font-medium">{fullMonthName}</p>
+            <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">{fullMonthName}</p>
           </div>
 
           {/* Total Sales */}
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-xs hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Total Sales</span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <ShoppingBag className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+                TOTAL SALES
+              </span>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              ৳{totalSales.toLocaleString()}
+            <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-slate-900 tracking-tight flex items-baseline gap-1 my-1">
+              <span className="font-extrabold text-slate-900 select-none">৳</span>
+              <span>{totalSales.toLocaleString()}</span>
             </div>
-            <p className="text-[11px] text-slate-600 mt-1 font-medium">Lifetime system orders</p>
+            <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">Lifetime system orders</p>
           </div>
         </div>
 
         {/* Row 2: Operational Status Metrics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Total Due */}
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-rose-100 shadow-xs hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-rose-100 shadow-[0_4px_20px_-4px_rgba(244,63,94,0.08)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">Total Due</span>
-              <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
-                <DollarSign className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-rose-600 uppercase tracking-wider">
+                TOTAL DUE
+              </span>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-rose-600 tracking-tight">
-              ৳{totalDueAcrossAgents.toLocaleString()}
+            <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-rose-600 tracking-tight flex items-baseline gap-1 my-1">
+              <span className="font-extrabold text-rose-600 select-none">৳</span>
+              <span>{totalDueAcrossAgents.toLocaleString()}</span>
             </div>
-            <p className="text-[11px] text-slate-600 mt-1 font-medium">Executive outstanding payable</p>
+            <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">Executive outstanding payable</p>
           </div>
 
           {/* Total Agents */}
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-xs hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Total Executives</span>
-              <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
-                <Users className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+                TOTAL EXECUTIVES
+              </span>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-slate-900 tracking-tight my-1">
               {totalAgents}
             </div>
-            <p className="text-[11px] text-slate-600 mt-1 font-medium">
+            <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">
               {pendingAgentsCount > 0 ? (
                 <span className="text-amber-600 font-bold">{pendingAgentsCount} pending approval</span>
               ) : (
@@ -193,40 +224,44 @@ export const StatCards: React.FC = () => {
           </div>
 
           {/* Total Products */}
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-xs hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Total Products</span>
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                <Package className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+                TOTAL PRODUCTS
+              </span>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <Package className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-slate-900 tracking-tight my-1">
               {products.length}
             </div>
-            <p className="text-[11px] text-slate-600 mt-1 font-medium">Frozen items catalog</p>
+            <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">Frozen items catalog</p>
           </div>
 
           {/* Low Stock Items */}
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-xs hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Low Stock Items</span>
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+                LOW STOCK ITEMS
+              </span>
               <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shrink-0 ${
                   lowStockCount > 0 ? 'bg-amber-100 text-amber-700 animate-pulse' : 'bg-emerald-50 text-emerald-600'
                 }`}
               >
-                <AlertTriangle className="w-4 h-4" />
+                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
             <div
-              className={`text-xl sm:text-2xl font-extrabold tracking-tight ${
+              className={`text-2xl sm:text-3xl lg:text-[32px] font-black tracking-tight my-1 ${
                 lowStockCount > 0 ? 'text-amber-600' : 'text-slate-900'
               }`}
             >
               {lowStockCount}
             </div>
-            <p className="text-[11px] text-slate-600 mt-1 font-medium">
-              {lowStockCount > 0 ? 'Requires stock replenishing' : 'Optimal inventory levels'}
+            <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">
+              {lowStockCount > 0 ? 'Requires replenishing' : 'Optimal inventory levels'}
             </p>
           </div>
         </div>
@@ -238,59 +273,73 @@ export const StatCards: React.FC = () => {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {/* Today's Sale */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-xs hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Today's Sale</span>
-          <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
-            <TrendingUp className="w-4 h-4" />
+          <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+            TODAY'S SALE
+          </span>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
-        <div className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-          ৳{todaySales.toLocaleString()}
+        <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-slate-900 tracking-tight flex items-baseline gap-1 my-1">
+          <span className="font-extrabold text-slate-900 select-none">৳</span>
+          <span>{todaySales.toLocaleString()}</span>
         </div>
-        <p className="text-[11px] text-slate-600 mt-1 font-medium">Confirmed orders today</p>
+        <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">Confirmed orders today</p>
       </div>
 
       {/* This Week */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-xs hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">This Week</span>
-          <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-            <Calendar className="w-4 h-4" />
+          <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+            THIS WEEK
+          </span>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
-        <div className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-          ৳{weekSales.toLocaleString()}
+        <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-slate-900 tracking-tight flex items-baseline gap-1 my-1">
+          <span className="font-extrabold text-slate-900 select-none">৳</span>
+          <span>{weekSales.toLocaleString()}</span>
         </div>
-        <p className="text-[11px] text-slate-600 mt-1 font-medium">Sat – Fri ({formattedRange})</p>
+        <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight truncate" title={`Sat – Fri (${formattedRange})`}>
+          Sat – Fri ({formattedRange})
+        </p>
       </div>
 
       {/* This Month */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-xs hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">This Month</span>
-          <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
-            <CalendarDays className="w-4 h-4" />
+          <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+            THIS MONTH
+          </span>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+            <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
-        <div className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-          ৳{monthSales.toLocaleString()}
+        <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-slate-900 tracking-tight flex items-baseline gap-1 my-1">
+          <span className="font-extrabold text-slate-900 select-none">৳</span>
+          <span>{monthSales.toLocaleString()}</span>
         </div>
-        <p className="text-[11px] text-slate-600 mt-1 font-medium">{fullMonthName}</p>
+        <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">{fullMonthName}</p>
       </div>
 
       {/* Current Due */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-rose-100 shadow-xs hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-rose-100 shadow-[0_4px_20px_-4px_rgba(244,63,94,0.08)] hover:shadow-md transition-all duration-200">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">Current Due</span>
-          <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
-            <DollarSign className="w-4 h-4" />
+          <span className="text-[11px] sm:text-xs font-bold text-rose-600 uppercase tracking-wider">
+            CURRENT DUE
+          </span>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+            <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
-        <div className="text-xl sm:text-2xl font-extrabold text-rose-600 tracking-tight">
-          ৳{agentPersonalDue.toLocaleString()}
+        <div className="text-2xl sm:text-3xl lg:text-[32px] font-black text-rose-600 tracking-tight flex items-baseline gap-1 my-1">
+          <span className="font-extrabold text-rose-600 select-none">৳</span>
+          <span>{agentPersonalDue.toLocaleString()}</span>
         </div>
-        <p className="text-[11px] text-slate-600 mt-1 font-medium">Payable to Admin</p>
+        <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">Payable to Admin</p>
       </div>
     </div>
   );

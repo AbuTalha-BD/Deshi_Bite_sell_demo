@@ -21,10 +21,11 @@ import {
   mongoUpsert,
   mongoInsert,
   isMongoActive,
+  getWritableDataDir,
 } from './server/mongo';
 
 const PORT = 3000;
-const DB_DIR = path.join(process.cwd(), 'data');
+const DB_DIR = getWritableDataDir();
 const DB_FILE = path.join(DB_DIR, 'deshi_bite_db.json');
 
 // Helper to asynchronously sync mutations to MongoDB Cloud
@@ -155,7 +156,7 @@ function getBangladeshDateTime() {
   return { date: dateStr, time: timeStr, timestamp: now.getTime() };
 }
 
-async function startServer() {
+export async function createExpressApp() {
   const app = express();
   app.use(express.json());
 
@@ -1014,6 +1015,12 @@ async function startServer() {
     next(err);
   });
 
+  return app;
+}
+
+export async function startServer() {
+  const app = await createExpressApp();
+
   // Vite Middleware in dev or static files in production
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
@@ -1032,6 +1039,11 @@ async function startServer() {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`DESHI BITE Server running on http://localhost:${PORT}`);
   });
+
+  return app;
 }
 
-startServer();
+// Only auto-listen if not running as a serverless function
+if (!process.env.VERCEL) {
+  startServer();
+}

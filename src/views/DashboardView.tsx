@@ -226,7 +226,7 @@ export const DashboardView: React.FC = () => {
           </div>
           <button
             onClick={() => setActiveTab('sales')}
-            className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 cursor-pointer shrink-0"
           >
             <span>View All Sales</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -236,32 +236,14 @@ export const DashboardView: React.FC = () => {
         {recentSales.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-600">No sales recorded yet.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
-                <tr>
-                  <th className="py-3 px-3">Invoice No</th>
-                  <th className="py-3 px-3">Date & Time</th>
-                  {isAdmin && <th className="py-3 px-3">Executive</th>}
-                  <th className="py-3 px-3">Customer</th>
-                  <th className="py-3 px-3">Type</th>
-                  <th className="py-3 px-3 text-right">Grand Total</th>
-                  <th className="py-3 px-3 text-center">Cash Memo</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {recentSales.map((sale) => (
-                  <tr key={sale.id} className="hover:bg-purple-50/30 transition-colors">
-                    <td className="py-3 px-3 font-mono font-bold text-slate-900">{sale.invoiceNo}</td>
-                    <td className="py-3 px-3 text-slate-600">
-                      <div>{sale.createdAtDate}</div>
-                      <div className="text-[10px] text-slate-600">{sale.createdAtTime}</div>
-                    </td>
-                    {isAdmin && (
-                      <td className="py-3 px-3 font-semibold text-purple-800">{sale.agentName}</td>
-                    )}
-                    <td className="py-3 px-3 font-medium text-slate-800">{sale.customerName || 'Direct Customer'}</td>
-                    <td className="py-3 px-3">
+          <>
+            {/* Mobile View: Clean Card List (sm:hidden) */}
+            <div className="sm:hidden divide-y divide-slate-100">
+              {recentSales.map((sale) => (
+                <div key={sale.id} className="py-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono font-bold text-slate-900 text-xs">{sale.invoiceNo}</span>
                       <span
                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                           sale.saleType === 'RETAIL'
@@ -271,27 +253,95 @@ export const DashboardView: React.FC = () => {
                       >
                         {sale.saleType}
                       </span>
-                    </td>
-                    <td className="py-3 px-3 text-right font-extrabold text-slate-900">
-                      ৳{sale.grandTotal.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-3 text-center">
-                      <button
-                        onClick={() => {
-                          setSelectedSaleForInvoice(sale);
-                          setIsInvoiceModalOpen(true);
-                        }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-purple-100 text-slate-700 hover:text-purple-800 font-bold text-xs transition-colors cursor-pointer"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>View Memo</span>
-                      </button>
-                    </td>
+                    </div>
+                    <div className="text-sm font-black text-slate-900 flex items-baseline">
+                      <span className="font-extrabold mr-0.5">৳</span>
+                      <span>{sale.grandTotal.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-500">
+                    <span className="font-medium text-slate-800 truncate max-w-[180px]">
+                      {sale.customerName || 'Direct Customer'}
+                      {isAdmin && sale.agentName && (
+                        <span className="text-purple-700 ml-1 font-semibold">({sale.agentName})</span>
+                      )}
+                    </span>
+                    <span>{sale.createdAtDate}</span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setSelectedSaleForInvoice(sale);
+                      setIsInvoiceModalOpen(true);
+                    }}
+                    className="w-full mt-1.5 py-1.5 px-3 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>View Cash Memo</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View: Full Data Table (hidden sm:block) */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="py-3 px-3">Invoice No</th>
+                    <th className="py-3 px-3">Date & Time</th>
+                    {isAdmin && <th className="py-3 px-3">Executive</th>}
+                    <th className="py-3 px-3">Customer</th>
+                    <th className="py-3 px-3">Type</th>
+                    <th className="py-3 px-3 text-right">Grand Total</th>
+                    <th className="py-3 px-3 text-center">Cash Memo</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {recentSales.map((sale) => (
+                    <tr key={sale.id} className="hover:bg-purple-50/30 transition-colors">
+                      <td className="py-3 px-3 font-mono font-bold text-slate-900">{sale.invoiceNo}</td>
+                      <td className="py-3 px-3 text-slate-600">
+                        <div>{sale.createdAtDate}</div>
+                        <div className="text-[10px] text-slate-600">{sale.createdAtTime}</div>
+                      </td>
+                      {isAdmin && (
+                        <td className="py-3 px-3 font-semibold text-purple-800">{sale.agentName}</td>
+                      )}
+                      <td className="py-3 px-3 font-medium text-slate-800">{sale.customerName || 'Direct Customer'}</td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            sale.saleType === 'RETAIL'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-indigo-100 text-indigo-800'
+                          }`}
+                        >
+                          {sale.saleType}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-right font-extrabold text-slate-900">
+                        ৳{sale.grandTotal.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <button
+                          onClick={() => {
+                            setSelectedSaleForInvoice(sale);
+                            setIsInvoiceModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-purple-100 text-slate-700 hover:text-purple-800 font-bold text-xs transition-colors cursor-pointer"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>View Memo</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -24,7 +24,32 @@ interface DatabaseSchema {
   settings: BusinessSettings;
 }
 
-const CONFIG_FILE = path.join(process.cwd(), 'data', 'mongo_config.json');
+// Writable storage directory helper (with safe fallback for read-only serverless filesystems like Vercel)
+export function getWritableDataDir(): string {
+  try {
+    const dataDir = path.join(process.cwd(), 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    const testFile = path.join(dataDir, '.write-test');
+    fs.writeFileSync(testFile, 'ok', 'utf-8');
+    fs.unlinkSync(testFile);
+    return dataDir;
+  } catch {
+    // If process.cwd() is read-only (e.g. Vercel serverless environment), fallback to /tmp
+    const tmpDir = path.join('/tmp', 'deshi_bite_data');
+    if (!fs.existsSync(tmpDir)) {
+      try {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      } catch (e) {
+        // ignore
+      }
+    }
+    return tmpDir;
+  }
+}
+
+const CONFIG_FILE = path.join(getWritableDataDir(), 'mongo_config.json');
 
 // Memory references
 let client: MongoClient | null = null;
@@ -34,13 +59,21 @@ let lastError: string | null = null;
 let activeUri: string = process.env.MONGODB_URI || '';
 const DB_NAME = process.env.MONGODB_DB_NAME || 'deshi_bite';
 
-// Load saved URI if exists
+// Load saved URI if exists from writable config or /tmp fallback
 try {
-  if (fs.existsSync(CONFIG_FILE)) {
-    const raw = fs.readFileSync(CONFIG_FILE, 'utf-8');
-    const parsed = JSON.parse(raw);
-    if (parsed.uri && !activeUri) {
-      activeUri = parsed.uri;
+  const possibleConfigFiles = [
+    CONFIG_FILE,
+    path.join('/tmp', 'deshi_bite_data', 'mongo_config.json'),
+    path.join(process.cwd(), 'data', 'mongo_config.json'),
+  ];
+  for (const cf of possibleConfigFiles) {
+    if (fs.existsSync(cf)) {
+      const raw = fs.readFileSync(cf, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed.uri && !activeUri) {
+        activeUri = parsed.uri;
+        break;
+      }
     }
   }
 } catch (e) {
@@ -80,7 +113,10 @@ export function isMongoActive(): boolean {
 }
 
 export async function connectMongo(customUri?: string): Promise<{ success: boolean; message: string }> {
-  let uriToUse = customUri?.trim() || activeUri?.trim() || process.env.MONGODB_URI?.trim();
+  let uriToUse = customUri?.trim() || activeUri?.trim() || process.env.MONGODB_URI?.trim() || '';
+
+  // Clean accidental wrapping quotes or spaces from copy-paste
+  uriToUse = uriToUse.replace(/^["']|["']$/g, '').trim();
 
   if (!uriToUse) {
     try {
@@ -90,7 +126,7 @@ export async function connectMongo(customUri?: string): Promise<{ success: boole
           const content = fs.readFileSync(envPath, 'utf-8');
           const match = content.match(/^MONGODB_URI=(.+)$/m);
           if (match && match[1] && !match[1].startsWith('your_') && match[1].trim() !== '') {
-            uriToUse = match[1].trim();
+            uriToUse = match[1].trim().replace(/^["']|["']$/g, '');
             break;
           }
         }
@@ -117,37 +153,54 @@ export async function connectMongo(customUri?: string): Promise<{ success: boole
     }
 
     console.log(`[MongoDB] Attempting to connect to MongoDB Atlas... (${maskMongoUri(uriToUse)})`);
+
+    // Determine target database name (extract from URI path if present, otherwise default to deshi_bite)
+    let targetDbName = DB_NAME;
+    try {
+      const pseudoUrl = uriToUse.replace('mongodb+srv://', 'http://').replace('mongodb://', 'http://');
+      const parsed = new URL(pseudoUrl);
+      const extractedDb = parsed.pathname.replace(/^\//, '').split('?')[0].trim();
+      if (extractedDb) {
+        targetDbName = extractedDb;
+      }
+    } catch {
+      // ignore
+    }
     
-    // Connect with optimal timeout so app never blocks
+    // Connect with 20-second timeout to allow remote Atlas SSL handshake over cloud networks (e.g. Vercel)
     client = new MongoClient(uriToUse, {
-      serverSelectionTimeoutMS: 2500,
-      connectTimeoutMS: 3000,
+      serverSelectionTimeoutMS: 20000,
+      connectTimeoutMS: 20000,
       retryWrites: true,
     });
 
     await client.connect();
     // Ping database
-    await client.db(DB_NAME).command({ ping: 1 });
+    await client.db(targetDbName).command({ ping: 1 });
 
-    db = client.db(DB_NAME);
+    db = client.db(targetDbName);
     isConnected = true;
     lastError = null;
     activeUri = uriToUse;
 
-    // Save configuration for persistence
+    // Save configuration for persistence (try writable directory and /tmp fallback)
     try {
-      const dir = path.dirname(CONFIG_FILE);
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(CONFIG_FILE, JSON.stringify({ uri: uriToUse, dbName: DB_NAME, updatedAt: new Date().toISOString() }), 'utf-8');
+      const dir = getWritableDataDir();
+      const targetConfig = path.join(dir, 'mongo_config.json');
+      fs.writeFileSync(targetConfig, JSON.stringify({ uri: uriToUse, dbName: targetDbName, updatedAt: new Date().toISOString() }), 'utf-8');
     } catch (e) {
-      console.warn('[MongoDB] Could not persist mongo_config.json:', e);
+      console.warn('[MongoDB] Notice saving mongo_config.json:', e);
     }
 
-    console.log(`[MongoDB] Connected successfully to MongoDB Cloud database: "${DB_NAME}"`);
-    return { success: true, message: `Connected to MongoDB database "${DB_NAME}" successfully!` };
+    console.log(`[MongoDB] Connected successfully to MongoDB Cloud database: "${targetDbName}"`);
+    return { success: true, message: `Connected to MongoDB database "${targetDbName}" successfully!` };
   } catch (err: any) {
     isConnected = false;
-    lastError = err.message || 'Failed to connect to MongoDB';
+    let errMsg = err.message || 'Failed to connect to MongoDB';
+    if (errMsg.includes('Server selection timed out') || errMsg.includes('ETIMEDOUT') || errMsg.includes('ECONNREFUSED')) {
+      errMsg = `${errMsg}. Ensure that '0.0.0.0/0' (Allow Access From Anywhere) is added to your MongoDB Atlas Network Access IP whitelist.`;
+    }
+    lastError = errMsg;
     console.warn(`[MongoDB] Connection notice: ${lastError}`);
     return { success: false, message: lastError };
   }
