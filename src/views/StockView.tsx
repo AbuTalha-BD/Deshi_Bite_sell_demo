@@ -119,7 +119,7 @@ export const StockView: React.FC = () => {
             className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition-all cursor-pointer whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Record Stock Change</span>
+            <span>Record Stock Change</span>
           </button>
         )}
       </div>
@@ -164,7 +164,7 @@ export const StockView: React.FC = () => {
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none no-scrollbar">
           {['ALL', 'STOCK_IN', 'SALE', 'STOCK_OUT', 'ADJUSTMENT', 'RETURN'].map((t) => (
             <button
               key={t}

@@ -95,7 +95,7 @@ export const ProductsView: React.FC = () => {
                 className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>+ Add Product</span>
+                <span>Add Product</span>
               </button>
             </>
           ) : (
@@ -111,24 +111,24 @@ export const ProductsView: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-purple-100/80 shadow-xs">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 text-slate-600 absolute left-3 top-2.5" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-purple-100/80 shadow-xs">
+        <div className="relative w-full sm:max-w-sm">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search products (e.g. Nugget, Singara)..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-slate-50/50"
+            className="w-full pl-9 pr-3 py-2 sm:py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-slate-50/50"
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 w-full sm:w-auto">
           {(['ALL', 'LOW_STOCK', 'ACTIVE', 'INACTIVE'] as const).map((mode) => (
             <button
               key={mode}
               onClick={() => setFilter(mode)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-2 sm:py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
                 filter === mode
                   ? 'bg-purple-700 text-white shadow-2xs'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-600'

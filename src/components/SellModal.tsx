@@ -623,7 +623,7 @@ export const SellModal: React.FC = () => {
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition-all cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>+ ADD PRODUCT</span>
+                  <span>ADD PRODUCT</span>
                 </button>
               </div>
             </div>
