@@ -44,7 +44,6 @@ export const Navbar: React.FC = () => {
     ? [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'agents', label: 'Executives', icon: Users, badge: notifications.filter((n) => n.title.includes('Agent') || n.title.includes('Executive')).length || undefined },
-        { id: 'products', label: 'Product', icon: Package },
         { id: 'stock', label: 'Stock Management', icon: Boxes },
         { id: 'sales', label: 'All Sales & Invoices', icon: ShoppingCart },
         { id: 'due', label: 'Due & Payments', icon: DollarSign },
@@ -53,7 +52,6 @@ export const Navbar: React.FC = () => {
       ]
     : [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'products', label: 'Product', icon: Package },
         { id: 'sales', label: 'My Sales & Memos', icon: ShoppingCart },
         { id: 'due', label: 'My Due & Payments', icon: DollarSign },
         { id: 'settings', label: 'Profile & Settings', icon: Settings },

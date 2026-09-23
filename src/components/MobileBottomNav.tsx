@@ -28,13 +28,13 @@ export const MobileBottomNav: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('stock')}
+          onClick={() => setActiveTab('products')}
           className={`flex flex-col items-center justify-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'stock' ? 'text-purple-700 font-bold bg-purple-50' : 'text-slate-600 hover:text-slate-900'
+            activeTab === 'products' ? 'text-purple-700 font-bold bg-purple-50' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Boxes className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-[10px] whitespace-nowrap">Stock</span>
+          <Package className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="text-[10px] whitespace-nowrap">Product</span>
         </button>
 
         <button
