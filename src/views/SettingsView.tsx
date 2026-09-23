@@ -208,24 +208,27 @@ export const SettingsView: React.FC = () => {
                   <div className="text-[10px] text-purple-200 font-bold uppercase tracking-wider">
                     Current Outstanding Due
                   </div>
-                  <div className="text-lg font-extrabold text-rose-300 mt-0.5">
-                    ৳{(currentUser.currentDue || 0).toLocaleString()}
+                  <div className="text-lg font-black text-rose-300 mt-0.5 flex items-baseline gap-0.5">
+                    <span className="font-black select-none">৳</span>
+                    <span>{(currentUser.currentDue || 0).toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="bg-white/5 p-3 rounded-2xl border border-white/10">
                   <div className="text-[10px] text-purple-200 font-bold uppercase tracking-wider">
                     My Cleared Payments
                   </div>
-                  <div className="text-lg font-extrabold text-emerald-300 mt-0.5">
-                    ৳{(currentUser.totalPaid || 0).toLocaleString()}
+                  <div className="text-lg font-black text-emerald-300 mt-0.5 flex items-baseline gap-0.5">
+                    <span className="font-black select-none">৳</span>
+                    <span>{(currentUser.totalPaid || 0).toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="bg-white/5 p-3 rounded-2xl border border-white/10">
                   <div className="text-[10px] text-purple-200 font-bold uppercase tracking-wider">
                     Lifetime Sales Value
                   </div>
-                  <div className="text-lg font-extrabold text-purple-200 mt-0.5">
-                    ৳{(currentUser.totalSales || 0).toLocaleString()}
+                  <div className="text-lg font-black text-purple-200 mt-0.5 flex items-baseline gap-0.5">
+                    <span className="font-black select-none">৳</span>
+                    <span>{(currentUser.totalSales || 0).toLocaleString()}</span>
                   </div>
                 </div>
               </div>

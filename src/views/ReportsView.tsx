@@ -93,8 +93,9 @@ export const ReportsView: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-purple-100/80 shadow-xs">
           <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Gross Sales Volume</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-purple-900 mt-1">
-            ৳{totalSalesGross.toLocaleString()}
+          <div className="text-2xl sm:text-3xl font-black text-purple-900 mt-1 flex items-baseline gap-0.5">
+            <span className="font-black select-none">৳</span>
+            <span>{totalSalesGross.toLocaleString()}</span>
           </div>
           <p className="text-[11px] text-slate-600 mt-1">{sales.length} customer invoices issued</p>
         </div>
@@ -103,8 +104,9 @@ export const ReportsView: React.FC = () => {
           <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider">
             Retail Channel (খুচরা)
           </span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-            ৳{retailSales.toLocaleString()}
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 mt-1 flex items-baseline gap-0.5">
+            <span className="font-black select-none">৳</span>
+            <span>{retailSales.toLocaleString()}</span>
           </div>
           <p className="text-[11px] text-slate-600 mt-1">
             {totalSalesGross > 0 ? Math.round((retailSales / totalSalesGross) * 100) : 0}% of gross revenue
@@ -115,8 +117,9 @@ export const ReportsView: React.FC = () => {
           <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider">
             Wholesale Channel (পাইকারি)
           </span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-            ৳{wholesaleSales.toLocaleString()}
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 mt-1 flex items-baseline gap-0.5">
+            <span className="font-black select-none">৳</span>
+            <span>{wholesaleSales.toLocaleString()}</span>
           </div>
           <p className="text-[11px] text-slate-600 mt-1">
             {totalSalesGross > 0 ? Math.round((wholesaleSales / totalSalesGross) * 100) : 0}% of gross revenue

@@ -65,8 +65,9 @@ export const AgentsView: React.FC = () => {
           <span className={`text-[11px] font-bold uppercase ${totalDue < 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
             {totalDue < 0 ? 'Total Advance Balance' : 'Total Outstanding Due'}
           </span>
-          <div className={`text-2xl font-extrabold mt-1 ${totalDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {totalDue < 0 ? `-৳${Math.abs(totalDue).toLocaleString()}` : `৳${totalDue.toLocaleString()}`}
+          <div className={`text-2xl font-black mt-1 flex items-baseline gap-0.5 ${totalDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            <span className="font-black select-none">{totalDue < 0 ? '-৳' : '৳'}</span>
+            <span>{Math.abs(totalDue).toLocaleString()}</span>
           </div>
           <p className="text-[11px] text-slate-600 mt-0.5">
             {totalDue < 0 ? 'Advance credit across executives' : 'Cumulative executive balance'}

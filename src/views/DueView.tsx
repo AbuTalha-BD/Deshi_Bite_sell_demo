@@ -75,8 +75,9 @@ export const DueView: React.FC = () => {
                   <DollarSign className="w-4 h-4" />
                 </div>
               </div>
-              <div className={`text-2xl sm:text-3xl font-extrabold ${isAdvance ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {isAdvance ? `-৳${Math.abs(dueVal).toLocaleString()}` : `৳${dueVal.toLocaleString()}`}
+              <div className={`text-2xl sm:text-3xl font-black flex items-baseline gap-0.5 ${isAdvance ? 'text-emerald-600' : 'text-rose-600'}`}>
+                <span className="font-black select-none">{isAdvance ? '-৳' : '৳'}</span>
+                <span>{Math.abs(dueVal).toLocaleString()}</span>
               </div>
               <p className="text-[11px] text-slate-600 mt-1">
                 {isAdmin
@@ -96,8 +97,9 @@ export const DueView: React.FC = () => {
               <ShieldCheck className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700">
-            ৳{(isAdmin ? totalClearedPayments : agentClearedPayments).toLocaleString()}
+          <div className="text-2xl sm:text-3xl font-black text-emerald-700 flex items-baseline gap-0.5">
+            <span className="font-black select-none">৳</span>
+            <span>{(isAdmin ? totalClearedPayments : agentClearedPayments).toLocaleString()}</span>
           </div>
           <p className="text-[11px] text-slate-600 mt-1">
             {isAdmin ? 'Settled & deposited into business accounts' : 'Payments verified & cleared by Admin'}
