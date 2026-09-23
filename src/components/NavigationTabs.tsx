@@ -51,7 +51,7 @@ export const NavigationTabs: React.FC = () => {
   const tabs = isAdmin ? adminTabs : agentTabs;
 
   return (
-    <nav className="hidden lg:flex items-center gap-1.5 p-1.5 bg-white rounded-2xl border border-purple-100/70 shadow-2xs overflow-x-auto">
+    <nav className="hidden lg:flex items-center gap-1.5 p-1.5 app-card rounded-2xl overflow-x-auto">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;

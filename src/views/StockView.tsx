@@ -126,22 +126,22 @@ export const StockView: React.FC = () => {
 
       {/* Top Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-purple-100/80 shadow-xs">
-          <span className="text-[11px] font-bold text-slate-600 uppercase">Total Warehouse Stock (KG)</span>
-          <div className="text-xl sm:text-2xl font-extrabold text-purple-900 mt-1">{totalStockKg.toLocaleString()} KG</div>
+        <div className="app-card p-4 sm:p-5 rounded-2xl">
+          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Total Warehouse Stock (KG)</span>
+          <div className="text-xl sm:text-2xl font-black text-purple-900 mt-1">{totalStockKg.toLocaleString()} KG</div>
           <p className="text-[11px] text-slate-600 mt-0.5">Across {products.length} catalog items</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-purple-100/80 shadow-xs">
-          <span className="text-[11px] font-bold text-slate-600 uppercase">Total Warehouse Stock (PCS)</span>
-          <div className="text-xl sm:text-2xl font-extrabold text-indigo-900 mt-1">{totalStockPcs.toLocaleString()} PCS</div>
+        <div className="app-card p-4 sm:p-5 rounded-2xl">
+          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Total Warehouse Stock (PCS)</span>
+          <div className="text-xl sm:text-2xl font-black text-indigo-900 mt-1">{totalStockPcs.toLocaleString()} PCS</div>
           <p className="text-[11px] text-slate-600 mt-0.5">Individually packaged pieces</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-purple-100/80 shadow-xs">
-          <span className="text-[11px] font-bold text-amber-700 uppercase">Critical Low Stock Items</span>
+        <div className="app-card p-4 sm:p-5 rounded-2xl">
+          <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Critical Low Stock Items</span>
           <div
-            className={`text-xl sm:text-2xl font-extrabold mt-1 ${
+            className={`text-xl sm:text-2xl font-black mt-1 ${
               lowStockCount > 0 ? 'text-amber-600 animate-pulse' : 'text-slate-900'
             }`}
           >
@@ -152,7 +152,7 @@ export const StockView: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-purple-100/80 shadow-xs">
+      <div className="app-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl">
         <div className="relative flex-1 max-w-full sm:max-w-sm">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -160,7 +160,7 @@ export const StockView: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by product or reference..."
-            className="w-full pl-9 pr-3 py-2 sm:py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-slate-50/50"
+            className="w-full pl-9 pr-3 py-2 sm:py-1.5 text-xs rounded-xl border border-slate-300/90 focus:outline-hidden focus:border-purple-500 bg-white"
           />
         </div>
 
@@ -171,8 +171,8 @@ export const StockView: React.FC = () => {
               onClick={() => setSelectedType(t)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 selectedType === t
-                  ? 'bg-purple-700 text-white shadow-2xs'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                  ? 'bg-purple-700 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
               }`}
             >
               {t === 'ALL' ? 'ALL' : t.replace('_', ' ')}
@@ -182,13 +182,13 @@ export const StockView: React.FC = () => {
       </div>
 
       {/* Stock Transactions Audit Ledger */}
-      <div className="bg-white rounded-3xl border border-purple-100/80 shadow-xs overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-2">
+      <div className="app-card rounded-2xl overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between gap-2">
           <div>
             <h3 className="text-sm font-extrabold text-slate-900">Inventory Ledger Audit History</h3>
             <p className="text-xs text-slate-600 font-medium">Real-time audited movement of warehouse goods</p>
           </div>
-          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl whitespace-nowrap">
+          <span className="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-2.5 py-1 rounded-xl whitespace-nowrap">
             {filteredTransactions.length} records
           </span>
         </div>
@@ -198,7 +198,7 @@ export const StockView: React.FC = () => {
         ) : (
           <>
             {/* Mobile Responsive Card View (No cramped sideways scroll) */}
-            <div className="sm:hidden divide-y divide-slate-100">
+            <div className="sm:hidden p-3.5 space-y-3">
               {filteredTransactions.map((tx) => {
                 const txDate = getTxDate(tx);
                 const txTime = getTxTime(tx);
@@ -206,7 +206,7 @@ export const StockView: React.FC = () => {
                 const hasFlow = tx.stockBefore !== undefined && tx.stockAfter !== undefined;
 
                 return (
-                  <div key={tx.id} className="p-4 space-y-2.5 hover:bg-purple-50/15 transition-colors">
+                  <div key={tx.id} className="app-box p-3.5 rounded-xl space-y-2.5">
                     {/* Top Row: Date & Time + Action Type Badge */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
@@ -239,7 +239,7 @@ export const StockView: React.FC = () => {
 
                       <div className="text-right">
                         <span
-                          className={`text-base font-extrabold font-mono ${
+                          className={`text-base font-black font-mono ${
                             isPositive ? 'text-emerald-700' : 'text-rose-600'
                           }`}
                         >
@@ -250,7 +250,7 @@ export const StockView: React.FC = () => {
                     </div>
 
                     {/* Bottom Row: Recorded By & Reference Note */}
-                    <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 pt-1.5 border-t border-slate-50">
+                    <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 pt-2 border-t border-slate-200/80">
                       <div className="flex items-center gap-1">
                         <User className="w-3 h-3 text-slate-400 shrink-0" />
                         <span>
@@ -259,7 +259,7 @@ export const StockView: React.FC = () => {
                       </div>
 
                       {tx.referenceNote && (
-                        <span className="italic text-slate-500 truncate max-w-[170px]" title={tx.referenceNote}>
+                        <span className="italic text-slate-600 truncate max-w-[170px]" title={tx.referenceNote}>
                           {tx.referenceNote}
                         </span>
                       )}
@@ -272,7 +272,7 @@ export const StockView: React.FC = () => {
             {/* Desktop Table View */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-xs text-left">
-                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Date & Time</th>
                     <th className="py-3 px-4">Product Name</th>

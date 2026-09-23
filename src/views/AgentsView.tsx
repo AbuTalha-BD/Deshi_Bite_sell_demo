@@ -43,14 +43,14 @@ export const AgentsView: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-purple-100/80 shadow-xs">
-          <span className="text-[11px] font-bold text-slate-600 uppercase">Active Sales Executives</span>
+        <div className="app-card p-4 sm:p-5 rounded-2xl">
+          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Active Sales Executives</span>
           <div className="text-2xl font-extrabold text-slate-900 mt-1">{activeCount} Executives</div>
           <p className="text-[11px] text-slate-600 mt-0.5">Authorized to record orders</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-purple-100/80 shadow-xs">
-          <span className="text-[11px] font-bold text-amber-700 uppercase">Pending Registrations</span>
+        <div className="app-card p-4 sm:p-5 rounded-2xl">
+          <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Pending Registrations</span>
           <div
             className={`text-2xl font-extrabold mt-1 ${
               pendingCount > 0 ? 'text-amber-600 animate-pulse' : 'text-slate-900'
@@ -61,8 +61,8 @@ export const AgentsView: React.FC = () => {
           <p className="text-[11px] text-slate-600 mt-0.5">Awaiting Administrator review</p>
         </div>
 
-        <div className={`bg-white p-4 rounded-2xl border ${totalDue < 0 ? 'border-emerald-100' : 'border-rose-100'} shadow-xs`}>
-          <span className={`text-[11px] font-bold uppercase ${totalDue < 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+        <div className="app-card p-4 sm:p-5 rounded-2xl">
+          <span className={`text-[11px] font-bold uppercase tracking-wider ${totalDue < 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
             {totalDue < 0 ? 'Total Advance Balance' : 'Total Outstanding Due'}
           </span>
           <div className={`text-2xl font-black mt-1 flex items-baseline gap-0.5 ${totalDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
@@ -76,15 +76,15 @@ export const AgentsView: React.FC = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-1.5 sm:gap-2 bg-white p-2 rounded-2xl border border-purple-100/80 shadow-xs max-w-full overflow-x-auto">
+      <div className="app-card flex items-center gap-1.5 sm:gap-2 p-2 rounded-2xl max-w-full overflow-x-auto">
         {(['ALL', 'ACTIVE', 'PENDING', 'SUSPENDED'] as const).map((mode) => (
           <button
             key={mode}
             onClick={() => setFilter(mode)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               filter === mode
-                ? 'bg-purple-700 text-white shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'bg-purple-700 text-white shadow-xs'
+                : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             {mode === 'ALL'
@@ -99,39 +99,39 @@ export const AgentsView: React.FC = () => {
       </div>
 
       {/* Agents List / Table */}
-      <div className="bg-white rounded-3xl border border-purple-100/80 shadow-xs overflow-hidden">
+      <div>
         {/* Mobile Card View */}
-        <div className="block sm:hidden divide-y divide-slate-100">
+        <div className="block sm:hidden space-y-3.5">
           {agentUsers.length === 0 ? (
-            <div className="p-8 text-center text-slate-500 text-xs">No sales executives found.</div>
+            <div className="app-card p-8 text-center text-slate-500 text-xs rounded-2xl">No sales executives found.</div>
           ) : (
             agentUsers.map((agent) => (
-              <div key={agent.id} className="p-4 space-y-3">
-                <div className="flex items-start justify-between">
+              <div key={agent.id} className="app-card p-4 rounded-2xl space-y-3.5 hover:border-purple-300 transition-all">
+                <div className="flex items-start justify-between gap-2 pb-2 border-b border-slate-100">
                   <div>
                     <h3 className="text-sm font-extrabold text-slate-900">{agent.name}</h3>
-                    <p className="text-xs text-slate-600 font-mono">{agent.phone}</p>
+                    <p className="text-xs text-slate-600 font-mono font-medium">{agent.phone}</p>
                     <p className="text-[11px] text-slate-500">{agent.address || 'Dhaka, Bangladesh'}</p>
                   </div>
                   <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                       agent.status === 'ACTIVE'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
                         : agent.status === 'PENDING'
-                        ? 'bg-amber-100 text-amber-800 animate-pulse'
-                        : 'bg-rose-100 text-rose-800'
+                        ? 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse'
+                        : 'bg-rose-100 text-rose-800 border-rose-200'
                     }`}
                   >
                     {agent.status}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-slate-50 text-xs">
+                <div className="app-box p-3 rounded-xl flex items-center justify-between text-xs">
                   <div>
-                    <span className="text-[10px] font-semibold text-slate-500 uppercase block">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
                       {agent.currentDue < 0 ? 'Advance Balance' : 'Current Due'}
                     </span>
-                    <span className={`font-extrabold text-base ${agent.currentDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    <span className={`font-black text-base ${agent.currentDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                       {agent.currentDue < 0 ? `-৳${Math.abs(agent.currentDue).toLocaleString()} (Advance)` : `৳${agent.currentDue.toLocaleString()}`}
                     </span>
                   </div>
@@ -141,13 +141,13 @@ export const AgentsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => updateAgentStatus(agent.id, 'ACTIVE')}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs cursor-pointer"
                         >
                           Approve
                         </button>
                         <button
                           onClick={() => setAgentToReject(agent)}
-                          className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs border border-rose-200"
+                          className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 cursor-pointer"
                         >
                           Reject
                         </button>
@@ -159,13 +159,13 @@ export const AgentsView: React.FC = () => {
                             setSelectedAgentForPayment(agent);
                             setIsPaymentModalOpen(true);
                           }}
-                          className="px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 font-bold text-xs border border-purple-200"
+                          className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs cursor-pointer"
                         >
                           Payment
                         </button>
                         <button
                           onClick={() => updateAgentStatus(agent.id, 'SUSPENDED')}
-                          className="px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs"
+                          className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs border border-slate-200 cursor-pointer"
                         >
                           Suspend
                         </button>
@@ -173,7 +173,7 @@ export const AgentsView: React.FC = () => {
                     ) : (
                       <button
                         onClick={() => updateAgentStatus(agent.id, 'ACTIVE')}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs"
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs cursor-pointer"
                       >
                         Re-activate
                       </button>
@@ -186,9 +186,9 @@ export const AgentsView: React.FC = () => {
         </div>
 
         {/* Desktop Table View */}
-        <div className="hidden sm:block overflow-x-auto">
+        <div className="hidden sm:block app-card rounded-2xl overflow-hidden">
           <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+            <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
               <tr>
                 <th className="py-3 px-4">Executive Name</th>
                 <th className="py-3 px-4">Phone Number</th>

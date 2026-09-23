@@ -16,7 +16,7 @@ export const MobileBottomNav: React.FC = () => {
 
   if (isAdmin) {
     return (
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-purple-100 px-2 py-1.5 grid grid-cols-5 items-center shadow-lg">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-2 py-1.5 grid grid-cols-5 items-center shadow-[0_-4px_20px_rgba(15,23,42,0.06)]">
         <button
           onClick={() => setActiveTab('dashboard')}
           className={`flex flex-col items-center justify-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
@@ -72,7 +72,7 @@ export const MobileBottomNav: React.FC = () => {
 
   // Agent Bottom Nav with Sell Button
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-purple-100 px-3 py-1.5 flex items-center justify-around shadow-lg">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-3 py-1.5 flex items-center justify-around shadow-[0_-4px_20px_rgba(15,23,42,0.06)]">
       <button
         onClick={() => setActiveTab('dashboard')}
         className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl transition-all cursor-pointer ${

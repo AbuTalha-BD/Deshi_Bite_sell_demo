@@ -66,8 +66,8 @@ export const SalesView: React.FC = () => {
 
       {/* Summary KPI chips */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-purple-100/80 shadow-xs">
-          <span className="text-[11px] font-bold text-slate-600 uppercase">Total Filtered Sales</span>
+        <div className="app-card p-4 sm:p-5 rounded-2xl">
+          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Total Filtered Sales</span>
           <div className="text-2xl font-black text-purple-900 mt-1 flex items-baseline gap-0.5">
             <span className="font-black select-none">৳</span>
             <span>{totalRevenue.toLocaleString()}</span>
@@ -75,21 +75,21 @@ export const SalesView: React.FC = () => {
           <p className="text-[11px] text-slate-600 mt-0.5">{filteredSales.length} total orders</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-purple-100/80 shadow-xs">
-          <span className="text-[11px] font-bold text-purple-700 uppercase">Retail Orders (খুচরা)</span>
+        <div className="app-card p-4 sm:p-5 rounded-2xl">
+          <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider">Retail Orders (খুচরা)</span>
           <div className="text-2xl font-extrabold text-slate-900 mt-1">{retailCount} Orders</div>
           <p className="text-[11px] text-slate-600 mt-0.5">End-consumer purchases</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-purple-100/80 shadow-xs">
-          <span className="text-[11px] font-bold text-indigo-700 uppercase">Wholesale Orders (পাইকারি)</span>
+        <div className="app-card p-4 sm:p-5 rounded-2xl">
+          <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider">Wholesale Orders (পাইকারি)</span>
           <div className="text-2xl font-extrabold text-slate-900 mt-1">{wholesaleCount} Orders</div>
           <p className="text-[11px] text-slate-600 mt-0.5">Bulk dealer store supply</p>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-purple-100/80 shadow-xs">
+      <div className="app-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
         <div className="relative w-full sm:max-w-sm">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -97,7 +97,7 @@ export const SalesView: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search invoice #, customer or executive..."
-            className="w-full pl-9 pr-3 py-2 sm:py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-slate-50/50"
+            className="w-full pl-9 pr-3 py-2 sm:py-1.5 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-purple-500 bg-white"
           />
         </div>
 
@@ -108,8 +108,8 @@ export const SalesView: React.FC = () => {
               onClick={() => setSaleTypeFilter(t)}
               className={`px-2 sm:px-3 py-2 sm:py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center truncate sm:whitespace-nowrap ${
                 saleTypeFilter === t
-                  ? 'bg-purple-700 text-white shadow-2xs'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                  ? 'bg-purple-700 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
               }`}
             >
               {t === 'ALL' ? 'All Invoices' : t === 'RETAIL' ? 'Retail (খুচরা)' : 'Wholesale (পাইকারি)'}
@@ -119,16 +119,18 @@ export const SalesView: React.FC = () => {
       </div>
 
       {/* Sales Invoices List: Responsive Mobile Cards (sm:hidden) + Desktop Table (hidden sm:block) */}
-      <div className="bg-white rounded-3xl border border-purple-100/80 shadow-xs overflow-hidden">
-        {/* Mobile View: Clean Card List */}
-        <div className="sm:hidden divide-y divide-slate-100">
+      <div>
+        {/* Mobile View: Distinct Individual Elevated Cards */}
+        <div className="sm:hidden space-y-3.5">
           {filteredSales.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500">No invoices found matching criteria.</div>
+            <div className="app-card p-8 text-center text-xs text-slate-500 rounded-2xl">
+              No invoices found matching criteria.
+            </div>
           ) : (
             filteredSales.map((sale) => (
-              <div key={sale.id} className="p-4 space-y-3">
+              <div key={sale.id} className="app-card p-4 rounded-2xl space-y-3.5 border border-slate-200/90 shadow-sm">
                 {/* Header: Invoice No + Sale Type */}
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-2 pb-2 border-b border-slate-100">
                   <div>
                     <span className="font-mono font-black text-sm text-slate-900 block">{sale.invoiceNo}</span>
                     <span className="text-[11px] text-slate-500 font-medium">
@@ -136,36 +138,40 @@ export const SalesView: React.FC = () => {
                     </span>
                   </div>
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 border ${
                       sale.saleType === 'RETAIL'
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-indigo-100 text-indigo-800'
+                        ? 'bg-purple-50 text-purple-800 border-purple-200'
+                        : 'bg-indigo-50 text-indigo-800 border-indigo-200'
                     }`}
                   >
                     {sale.saleType === 'RETAIL' ? 'Retail (খুচরা)' : 'Wholesale (পাইকারি)'}
                   </span>
                 </div>
 
-                {/* Info Card: Executive & Customer Details */}
-                <div className="bg-slate-50/70 p-3 rounded-2xl space-y-1.5 text-xs border border-slate-100">
+                {/* Info Card: Distinct Elevated Details Box */}
+                <div className="app-box p-3.5 rounded-xl space-y-2 text-xs">
                   {isAdmin && (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-500 text-[11px] font-medium">Executive:</span>
-                      <span className="font-bold text-purple-900">{sale.agentName}</span>
+                      <span className="text-slate-500 text-[11px] font-semibold">Executive:</span>
+                      <span className="font-bold text-purple-900 bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-2xs">
+                        {sale.agentName}
+                      </span>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 text-[11px] font-medium">Customer:</span>
-                    <span className="font-semibold text-slate-800 text-right">
+                    <span className="text-slate-500 text-[11px] font-semibold">Customer:</span>
+                    <span className="font-bold text-slate-800 text-right">
                       {sale.customerName || 'Direct Customer'}
-                      {sale.customerPhone && <span className="text-slate-500 text-[10px] ml-1">({sale.customerPhone})</span>}
+                      {sale.customerPhone && <span className="text-slate-500 text-[10px] font-mono ml-1">({sale.customerPhone})</span>}
                     </span>
                   </div>
 
-                  <div className="pt-1.5 border-t border-slate-200/50">
-                    <span className="text-slate-500 text-[10px] uppercase font-semibold block mb-0.5">Ordered Items</span>
-                    <p className="text-slate-700 text-xs font-medium leading-relaxed">
+                  <div className="pt-2 border-t border-slate-200/90">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider block mb-1">
+                      Ordered Items
+                    </span>
+                    <p className="text-slate-800 text-xs font-semibold leading-relaxed bg-white p-2 rounded-lg border border-slate-200/90 shadow-2xs">
                       {sale.items.map((i) => `${i.productName} (${i.quantity} ${i.unit})`).join(', ')}
                     </p>
                   </div>
@@ -174,7 +180,7 @@ export const SalesView: React.FC = () => {
                 {/* Bottom Row: Grand Total + Action Button */}
                 <div className="flex items-center justify-between pt-1">
                   <div>
-                    <span className="text-[10px] font-semibold text-slate-500 uppercase block">Grand Total</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Grand Total</span>
                     <div className="text-lg font-black text-slate-900 flex items-baseline gap-0.5">
                       <span className="font-black select-none">৳</span>
                       <span>{sale.grandTotal.toLocaleString()}</span>
@@ -186,7 +192,7 @@ export const SalesView: React.FC = () => {
                       setSelectedSaleForInvoice(sale);
                       setIsInvoiceModalOpen(true);
                     }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200/80 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>View Memo</span>
@@ -197,10 +203,10 @@ export const SalesView: React.FC = () => {
           )}
         </div>
 
-        {/* Desktop View: Full Data Table */}
-        <div className="hidden sm:block overflow-x-auto">
+        {/* Desktop View: Full Data Table in Elevated Card */}
+        <div className="hidden sm:block app-card rounded-2xl overflow-hidden">
           <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+            <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
               <tr>
                 <th className="py-3 px-4">Invoice No</th>
                 <th className="py-3 px-4">Date & Time</th>

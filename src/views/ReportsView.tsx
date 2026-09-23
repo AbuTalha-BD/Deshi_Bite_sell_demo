@@ -91,7 +91,7 @@ export const ReportsView: React.FC = () => {
 
       {/* Top Channel Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-purple-100/80 shadow-xs">
+        <div className="app-card p-5 rounded-2xl">
           <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Gross Sales Volume</span>
           <div className="text-2xl sm:text-3xl font-black text-purple-900 mt-1 flex items-baseline gap-0.5">
             <span className="font-black select-none">৳</span>
@@ -100,7 +100,7 @@ export const ReportsView: React.FC = () => {
           <p className="text-[11px] text-slate-600 mt-1">{sales.length} customer invoices issued</p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-purple-100/80 shadow-xs">
+        <div className="app-card p-5 rounded-2xl">
           <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider">
             Retail Channel (খুচরা)
           </span>
@@ -113,7 +113,7 @@ export const ReportsView: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-purple-100/80 shadow-xs">
+        <div className="app-card p-5 rounded-2xl">
           <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider">
             Wholesale Channel (পাইকারি)
           </span>
@@ -130,9 +130,9 @@ export const ReportsView: React.FC = () => {
       {/* Two columns: Agent Performance & Product Demand */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Agent Leaderboard */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-purple-100/80 shadow-xs">
+        <div className="app-card rounded-2xl p-5 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center border border-purple-200">
               <Award className="w-4 h-4" />
             </div>
             <div>
@@ -145,23 +145,23 @@ export const ReportsView: React.FC = () => {
             {agentPerformance.map((agent, rank) => (
               <div
                 key={agent.id}
-                className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200 flex items-center justify-between"
+                className="app-box p-3.5 rounded-xl flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-purple-700 text-white font-extrabold text-xs flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-lg bg-purple-700 text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
                     #{rank + 1}
                   </div>
                   <div>
                     <h4 className="text-xs font-extrabold text-slate-900">{agent.name}</h4>
-                    <p className="text-[10px] text-slate-600">
+                    <p className="text-[10px] text-slate-600 font-medium">
                       {agent.ordersCount} Orders &bull; Outstanding Due: ৳{agent.currentDue.toLocaleString()}
                     </p>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-sm font-extrabold text-purple-700">৳{agent.totalRevenue.toLocaleString()}</span>
-                  <span className="block text-[10px] text-slate-600">Lifetime Gross</span>
+                  <span className="text-sm font-black text-purple-700">৳{agent.totalRevenue.toLocaleString()}</span>
+                  <span className="block text-[10px] text-slate-500 font-medium">Lifetime Gross</span>
                 </div>
               </div>
             ))}
@@ -169,9 +169,9 @@ export const ReportsView: React.FC = () => {
         </div>
 
         {/* Product Demand Performance */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-purple-100/80 shadow-xs">
+        <div className="app-card rounded-2xl p-5 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center border border-indigo-200">
               <Package className="w-4 h-4" />
             </div>
             <div>
@@ -184,19 +184,19 @@ export const ReportsView: React.FC = () => {
             {productPerformance.map((p) => (
               <div
                 key={p.name}
-                className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200 flex items-center justify-between"
+                className="app-box p-3.5 rounded-xl flex items-center justify-between"
               >
                 <div>
                   <h4 className="text-xs font-extrabold text-slate-900">{p.name}</h4>
-                  <p className="text-[10px] text-slate-600">
+                  <p className="text-[10px] text-slate-600 font-medium">
                     Volume: {p.kg > 0 ? `${p.kg} KG ` : ''}
                     {p.pcs > 0 ? `${p.pcs} PCS` : ''}
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-sm font-extrabold text-slate-900">৳{p.revenue.toLocaleString()}</span>
-                  <span className="block text-[10px] text-slate-600">Revenue</span>
+                  <span className="text-sm font-black text-slate-900">৳{p.revenue.toLocaleString()}</span>
+                  <span className="block text-[10px] text-slate-500 font-medium">Revenue</span>
                 </div>
               </div>
             ))}

@@ -87,9 +87,9 @@ export const DashboardView: React.FC = () => {
 
       {/* MongoDB Cloud Database Persistence Indicator - Admin Only */}
       {isAdmin && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-50/70 via-teal-50/50 to-white border border-emerald-200/70 shadow-2xs text-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-white border border-slate-200/90 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05),0_1px_3px_rgba(15,23,42,0.03)] text-xs">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
               <Database className="w-4 h-4" />
             </div>
             <div>
@@ -112,7 +112,7 @@ export const DashboardView: React.FC = () => {
           </div>
           <button
             onClick={() => setIsMongoModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-emerald-50 text-emerald-800 font-bold rounded-xl border border-emerald-300 shadow-2xs transition-colors cursor-pointer w-fit"
+            className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 hover:bg-emerald-50 text-emerald-800 font-bold rounded-xl border border-emerald-300 shadow-2xs transition-colors cursor-pointer w-fit"
           >
             <Cloud className="w-3.5 h-3.5" />
             <span>{mongoStatus?.connected ? 'Manage MongoDB Atlas' : 'Connect MongoDB Atlas'}</span>
@@ -130,10 +130,10 @@ export const DashboardView: React.FC = () => {
         {/* Side Panel: Inventory Alerts or Agent Top Items */}
         <div className="space-y-6">
           {/* Low Stock Warning Card */}
-          <div className="bg-white rounded-3xl p-5 border border-purple-100/80 shadow-xs">
+          <div className="app-card rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200">
                   <AlertTriangle className="w-4 h-4" />
                 </div>
                 <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
@@ -151,7 +151,7 @@ export const DashboardView: React.FC = () => {
             </div>
 
             {lowStockItems.length === 0 ? (
-              <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 text-xs font-medium flex items-center gap-2">
+              <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 text-xs font-medium flex items-center gap-2 border border-emerald-200">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>All frozen food items have healthy stock levels.</span>
               </div>
@@ -163,15 +163,15 @@ export const DashboardView: React.FC = () => {
                   return (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/50 border border-amber-200/60 text-xs"
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs"
                     >
                       <div>
                         <div className="font-bold text-slate-900">{item.name}</div>
-                        <div className="text-[10px] text-amber-700 font-medium">
+                        <div className="text-[10px] text-amber-800 font-medium">
                           Remaining: {stock} {unit}
                         </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded-md bg-amber-200/80 text-amber-900 text-[10px] font-bold">
+                      <span className="px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 text-[10px] font-bold border border-amber-300">
                         Critical
                       </span>
                     </div>
@@ -182,10 +182,10 @@ export const DashboardView: React.FC = () => {
           </div>
 
           {/* Catalog Snapshot */}
-          <div className="bg-white rounded-3xl p-5 border border-purple-100/80 shadow-xs">
+          <div className="app-card rounded-2xl p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center border border-purple-100">
                   <Package className="w-4 h-4" />
                 </div>
                 <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Top Products</h3>
@@ -216,7 +216,7 @@ export const DashboardView: React.FC = () => {
       </div>
 
       {/* Recent Sales Table */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-purple-100/80 shadow-xs">
+      <div className="app-card rounded-2xl p-5 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-extrabold text-slate-900">Recent Sales & Invoices</h3>
@@ -245,17 +245,17 @@ export const DashboardView: React.FC = () => {
                     <div className="flex items-center gap-1.5">
                       <span className="font-mono font-bold text-slate-900 text-xs">{sale.invoiceNo}</span>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                           sale.saleType === 'RETAIL'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-indigo-100 text-indigo-800'
+                            ? 'bg-purple-100 text-purple-800 border-purple-200'
+                            : 'bg-indigo-100 text-indigo-800 border-indigo-200'
                         }`}
                       >
                         {sale.saleType}
                       </span>
                     </div>
                     <div className="text-sm font-black text-slate-900 flex items-baseline">
-                      <span className="font-extrabold mr-0.5">৳</span>
+                      <span className="font-black mr-0.5">৳</span>
                       <span>{sale.grandTotal.toLocaleString()}</span>
                     </div>
                   </div>
@@ -275,7 +275,7 @@ export const DashboardView: React.FC = () => {
                       setSelectedSaleForInvoice(sale);
                       setIsInvoiceModalOpen(true);
                     }}
-                    className="w-full mt-1.5 py-1.5 px-3 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    className="w-full mt-1.5 py-1.5 px-3 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold text-xs flex items-center justify-center gap-1.5 border border-purple-200 transition-colors cursor-pointer"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>View Cash Memo</span>
@@ -287,7 +287,7 @@ export const DashboardView: React.FC = () => {
             {/* Desktop View: Full Data Table (hidden sm:block) */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-xs text-left">
-                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-3">Invoice No</th>
                     <th className="py-3 px-3">Date & Time</th>

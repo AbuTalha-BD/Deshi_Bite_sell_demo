@@ -49,7 +49,7 @@ export const LoginView: React.FC = () => {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-purple-100 overflow-hidden p-6 sm:p-8 space-y-6">
+      <div className="w-full max-w-md app-card rounded-2xl shadow-xl overflow-hidden p-6 sm:p-8 space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-700 via-indigo-600 to-purple-500 text-white flex items-center justify-center font-extrabold text-xl shadow-lg shadow-purple-500/20 mx-auto">
@@ -93,7 +93,7 @@ export const LoginView: React.FC = () => {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="01711000000"
-                className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-slate-50/50"
+                className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl border border-slate-300 focus:outline-hidden focus:border-purple-500 bg-white"
               />
             </div>
 
@@ -108,7 +108,7 @@ export const LoginView: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-slate-50/50 pr-10"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl border border-slate-300 focus:outline-hidden focus:border-purple-500 bg-white pr-10"
                 />
                 <button
                   type="button"
@@ -147,7 +147,7 @@ export const LoginView: React.FC = () => {
                 value={regName}
                 onChange={(e) => setRegName(e.target.value)}
                 placeholder="e.g. Md. Kabir Hossain"
-                className="w-full px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-slate-50/50"
+                className="w-full px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-300 focus:outline-hidden focus:border-purple-500 bg-white"
               />
             </div>
 
@@ -161,7 +161,7 @@ export const LoginView: React.FC = () => {
                 value={regPhone}
                 onChange={(e) => setRegPhone(e.target.value)}
                 placeholder="019XXXXXXXX"
-                className="w-full px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-slate-50/50"
+                className="w-full px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-300 focus:outline-hidden focus:border-purple-500 bg-white"
               />
             </div>
 
@@ -174,7 +174,7 @@ export const LoginView: React.FC = () => {
                 value={regAddress}
                 onChange={(e) => setRegAddress(e.target.value)}
                 placeholder="e.g. Mirpur, Dhaka"
-                className="w-full px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-slate-50/50"
+                className="w-full px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-300 focus:outline-hidden focus:border-purple-500 bg-white"
               />
             </div>
 
@@ -188,7 +188,7 @@ export const LoginView: React.FC = () => {
                 value={regPassword}
                 onChange={(e) => setRegPassword(e.target.value)}
                 placeholder="Minimum 6 characters"
-                className="w-full px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-slate-50/50"
+                className="w-full px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-300 focus:outline-hidden focus:border-purple-500 bg-white"
               />
             </div>
 

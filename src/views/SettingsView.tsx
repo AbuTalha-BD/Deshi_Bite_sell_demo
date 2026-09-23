@@ -144,13 +144,13 @@ export const SettingsView: React.FC = () => {
 
       {/* Admin Sub-Tabs */}
       {isAdmin && (
-        <div className="flex items-center gap-2 border-b border-purple-100 pb-3">
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
           <button
             onClick={() => setAdminTab('profile')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               adminTab === 'profile'
                 ? 'bg-purple-700 text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-purple-50 border border-slate-200'
+                : 'bg-white text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
             }`}
           >
             <KeyRound className="w-3.5 h-3.5" />
@@ -161,7 +161,7 @@ export const SettingsView: React.FC = () => {
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               adminTab === 'business'
                 ? 'bg-purple-700 text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-purple-50 border border-slate-200'
+                : 'bg-white text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
             }`}
           >
             <Building2 className="w-3.5 h-3.5" />
@@ -175,7 +175,7 @@ export const SettingsView: React.FC = () => {
         <div className="space-y-6">
           {/* Agent Status Card (Only shown for Agent) */}
           {!isAdmin && currentUser && (
-            <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white p-6 rounded-3xl shadow-md space-y-4">
+            <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white p-6 rounded-2xl shadow-md space-y-4 border border-purple-800">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white font-extrabold text-lg">
@@ -237,7 +237,7 @@ export const SettingsView: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Card: Profile Details (Name & Phone strictly locked; Email & Address editable) */}
-            <div className="bg-white rounded-3xl p-6 border border-purple-100/80 shadow-xs space-y-5 flex flex-col justify-between">
+            <div className="app-card rounded-2xl p-6 space-y-5 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
@@ -347,7 +347,7 @@ export const SettingsView: React.FC = () => {
             </div>
 
             {/* Right Card: Password Change Section */}
-            <div className="bg-white rounded-3xl p-6 border border-purple-100/80 shadow-xs space-y-5 flex flex-col justify-between">
+            <div className="app-card rounded-2xl p-6 space-y-5 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
@@ -468,7 +468,7 @@ export const SettingsView: React.FC = () => {
 
       {/* SECTION 2: BUSINESS BRANDING & SYSTEM (Admin Only, when adminTab === 'business') */}
       {isAdmin && adminTab === 'business' && (
-        <form onSubmit={handleSaveBusiness} className="bg-white rounded-3xl p-6 border border-purple-100/80 shadow-xs space-y-5">
+        <form onSubmit={handleSaveBusiness} className="app-card rounded-2xl p-6 space-y-5">
           {/* Business Name */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

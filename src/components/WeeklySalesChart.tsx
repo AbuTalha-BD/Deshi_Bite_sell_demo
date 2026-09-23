@@ -47,7 +47,7 @@ export const WeeklySalesChart: React.FC = () => {
   const maxAmount = Math.max(...chartDays.map((d) => d.total), 100);
 
   return (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-purple-100/80 shadow-xs">
+    <div className="app-card rounded-2xl p-5 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <div className="flex items-center gap-2">

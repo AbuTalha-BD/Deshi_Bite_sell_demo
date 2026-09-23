@@ -64,14 +64,14 @@ export const DueView: React.FC = () => {
           const dueVal = isAdmin ? totalSystemDue : (currentUser?.currentDue || 0);
           const isAdvance = dueVal < 0;
           return (
-            <div className={`bg-white p-5 rounded-2xl border ${isAdvance ? 'border-emerald-100 shadow-emerald-50/50' : 'border-rose-100'} shadow-xs`}>
+            <div className="app-card p-5 rounded-2xl">
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-[11px] font-bold uppercase tracking-wider ${isAdvance ? 'text-emerald-700' : 'text-rose-600'}`}>
                   {isAdmin
                     ? isAdvance ? 'Total Advance Balance' : 'Total Outstanding Due'
                     : isAdvance ? 'My Advance Balance' : 'My Current Due Balance'}
                 </span>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isAdvance ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isAdvance ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
                   <DollarSign className="w-4 h-4" />
                 </div>
               </div>
@@ -88,12 +88,12 @@ export const DueView: React.FC = () => {
           );
         })()}
 
-        <div className="bg-white p-5 rounded-2xl border border-purple-100/80 shadow-xs">
+        <div className="app-card p-5 rounded-2xl">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
               {isAdmin ? 'Total Cleared Payments' : 'My Cleared Payments'}
             </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
               <ShieldCheck className="w-4 h-4" />
             </div>
           </div>
@@ -106,12 +106,12 @@ export const DueView: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-purple-100/80 shadow-xs">
+        <div className="app-card p-5 rounded-2xl">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider">
               {isAdmin ? 'Payment Status' : 'Account Standing'}
             </span>
-            <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
+            <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
@@ -138,8 +138,8 @@ export const DueView: React.FC = () => {
 
       {/* Admin: Agent Ledgers Table */}
       {isAdmin && (
-        <div className="bg-white rounded-3xl border border-purple-100/80 shadow-xs overflow-hidden">
-          <div className="p-4 sm:p-5 border-b border-slate-100">
+        <div className="app-card rounded-2xl overflow-hidden">
+          <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/50">
             <h3 className="text-sm font-extrabold text-slate-900">Executive Accounts & Due Balances</h3>
             <p className="text-xs text-slate-600 font-medium">
               Click "Clear / Record Payment" to log cash receipt from any executive
@@ -147,42 +147,42 @@ export const DueView: React.FC = () => {
           </div>
 
           {/* Mobile Card View */}
-          <div className="sm:hidden divide-y divide-slate-100">
+          <div className="sm:hidden p-3.5 space-y-3">
             {agentUsers.map((agent) => (
-              <div key={agent.id} className="p-4 space-y-3">
+              <div key={agent.id} className="app-box p-3.5 rounded-xl space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h4 className="font-extrabold text-slate-900 text-sm">{agent.name}</h4>
                     <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
                       <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                      <span>{agent.phone}</span>
+                      <span className="font-mono">{agent.phone}</span>
                     </div>
                   </div>
                   <span
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                       agent.status === 'ACTIVE'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
                         : agent.status === 'PENDING'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-rose-100 text-rose-800'
+                        ? 'bg-amber-100 text-amber-800 border-amber-200'
+                        : 'bg-rose-100 text-rose-800 border-rose-200'
                     }`}
                   >
                     {agent.status}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-50">
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200">
                   <div>
-                    <span className="text-slate-500 block text-[10px] uppercase font-semibold">
+                    <span className="text-slate-500 block text-[10px] uppercase font-bold tracking-wider">
                       {agent.currentDue < 0 ? 'Advance Balance' : 'Outstanding Due'}
                     </span>
-                    <span className={`font-extrabold text-base ${agent.currentDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    <span className={`font-black text-base ${agent.currentDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                       {agent.currentDue < 0 ? `-৳${Math.abs(agent.currentDue).toLocaleString()} (Advance)` : `৳${agent.currentDue.toLocaleString()}`}
                     </span>
                   </div>
                   <button
                     onClick={() => handleOpenPaymentForAgent(agent)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs border border-emerald-200 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                   >
                     <DollarSign className="w-3.5 h-3.5" />
                     <span>Record Payment</span>
@@ -195,7 +195,7 @@ export const DueView: React.FC = () => {
           {/* Desktop Table View */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+              <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                 <tr>
                   <th className="py-3 px-4">Executive Name</th>
                   <th className="py-3 px-4">Contact Phone</th>
@@ -211,22 +211,22 @@ export const DueView: React.FC = () => {
                     <td className="py-3 px-4">
                       <div className="font-extrabold text-slate-900">{agent.name}</div>
                     </td>
-                    <td className="py-3 px-4 text-slate-600 font-medium">{agent.phone}</td>
+                    <td className="py-3 px-4 text-slate-600 font-mono font-medium">{agent.phone}</td>
                     <td className="py-3 px-4 text-slate-600">{agent.address || 'Dhaka, Bangladesh'}</td>
                     <td className="py-3 px-4 text-center">
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                           agent.status === 'ACTIVE'
-                            ? 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
                             : agent.status === 'PENDING'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-rose-100 text-rose-800'
+                            ? 'bg-amber-100 text-amber-800 border-amber-200'
+                            : 'bg-rose-100 text-rose-800 border-rose-200'
                         }`}
                       >
                         {agent.status}
                       </span>
                     </td>
-                    <td className={`py-3 px-4 text-right font-extrabold text-sm ${
+                    <td className={`py-3 px-4 text-right font-black text-sm ${
                       agent.currentDue < 0 ? 'text-emerald-600' : 'text-rose-600'
                     }`}>
                       {agent.currentDue < 0 ? `-৳${Math.abs(agent.currentDue).toLocaleString()} (Advance)` : `৳${agent.currentDue.toLocaleString()}`}
@@ -249,8 +249,8 @@ export const DueView: React.FC = () => {
       )}
 
       {/* Payment History Audit Table */}
-      <div className="bg-white rounded-3xl border border-purple-100/80 shadow-xs overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-slate-100">
+      <div className="app-card rounded-2xl overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/50">
           <h3 className="text-sm font-extrabold text-slate-900">Payment Collection History</h3>
           <p className="text-xs text-slate-600 font-medium">Audited records of received payments and due clearances</p>
         </div>
@@ -260,13 +260,13 @@ export const DueView: React.FC = () => {
         ) : (
           <>
             {/* Mobile Responsive Cards (No sideways scroll, fully visible date & details) */}
-            <div className="sm:hidden divide-y divide-slate-100">
+            <div className="sm:hidden p-3.5 space-y-3">
               {relevantPayments.map((p) => {
                 const payDate = p.date || p.createdAtDate || (p.timestamp ? new Date(p.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent');
                 const payTime = p.time || p.createdAtTime || (p.timestamp ? new Date(p.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '');
 
                 return (
-                  <div key={p.id} className="p-4 space-y-2.5 hover:bg-purple-50/20 transition-colors">
+                  <div key={p.id} className="app-box p-3.5 rounded-xl space-y-2.5">
                     {/* Top Row: Date & Time + Amount Paid */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
@@ -275,7 +275,7 @@ export const DueView: React.FC = () => {
                         {payTime && <span className="text-slate-500 font-normal">• {payTime}</span>}
                       </div>
                       <div className="text-right">
-                        <span className="text-base font-extrabold text-emerald-700">
+                        <span className="text-base font-black text-emerald-700">
                           ৳{p.amount.toLocaleString()}
                         </span>
                       </div>
@@ -294,19 +294,19 @@ export const DueView: React.FC = () => {
                         </span>
                       )}
 
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200 whitespace-nowrap">
                         <CreditCard className="w-3 h-3 shrink-0" />
                         <span>{p.paymentMethod}</span>
                       </span>
                     </div>
 
                     {/* Bottom Row: Recorded By & Reference Note */}
-                    <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 pt-1.5 border-t border-slate-50">
+                    <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 pt-2 border-t border-slate-200/80">
                       <span>
                         Recorded By: <strong className="text-slate-700 font-semibold">{p.recordedBy}</strong>
                       </span>
                       {p.referenceNote && (
-                        <span className="italic text-slate-500 truncate max-w-[160px]" title={p.referenceNote}>
+                        <span className="italic text-slate-600 truncate max-w-[160px]" title={p.referenceNote}>
                           {p.referenceNote}
                         </span>
                       )}
@@ -319,7 +319,7 @@ export const DueView: React.FC = () => {
             {/* Desktop Table View */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-xs text-left">
-                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Date & Time</th>
                     {isAdmin && <th className="py-3 px-4">Executive Name</th>}

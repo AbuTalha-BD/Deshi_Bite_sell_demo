@@ -112,12 +112,12 @@ export const StatCards: React.FC = () => {
         {/* Row 1: Sales Revenue Metrics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Today's Sales */}
-          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05),0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
                 TODAY'S SALE
               </span>
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
                 <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
@@ -129,12 +129,12 @@ export const StatCards: React.FC = () => {
           </div>
 
           {/* This Week */}
-          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05),0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
                 THIS WEEK
               </span>
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
                 <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
@@ -151,12 +151,12 @@ export const StatCards: React.FC = () => {
           </div>
 
           {/* This Month */}
-          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05),0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
                 THIS MONTH
               </span>
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
                 <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
@@ -168,12 +168,12 @@ export const StatCards: React.FC = () => {
           </div>
 
           {/* Total Sales */}
-          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05),0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
                 TOTAL SALES
               </span>
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
                 <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
@@ -217,12 +217,12 @@ export const StatCards: React.FC = () => {
           </div>
 
           {/* Total Agents */}
-          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05),0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
                 TOTAL EXECUTIVES
               </span>
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
                 <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
@@ -239,12 +239,12 @@ export const StatCards: React.FC = () => {
           </div>
 
           {/* Total Products */}
-          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05),0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
                 TOTAL PRODUCTS
               </span>
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
                 <Package className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
@@ -288,12 +288,12 @@ export const StatCards: React.FC = () => {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {/* Today's Sale */}
-      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05),0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md transition-all duration-200">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
             TODAY'S SALE
           </span>
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
             <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
@@ -305,12 +305,12 @@ export const StatCards: React.FC = () => {
       </div>
 
       {/* This Week */}
-      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05),0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md transition-all duration-200">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
             THIS WEEK
           </span>
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
             <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
@@ -327,12 +327,12 @@ export const StatCards: React.FC = () => {
       </div>
 
       {/* This Month */}
-      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-200">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05),0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md transition-all duration-200">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
             THIS MONTH
           </span>
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
             <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
