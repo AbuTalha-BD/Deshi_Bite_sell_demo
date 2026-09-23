@@ -103,7 +103,7 @@ interface AppContextType {
     type: StockTransactionType;
     quantity: number;
     unit: UnitType;
-    referenceNote: string;
+    referenceNote?: string;
   }) => Promise<boolean>;
   updateAgentStatus: (agentId: string, status: 'ACTIVE' | 'REJECTED' | 'SUSPENDED') => Promise<boolean>;
   markNotificationsAsRead: () => Promise<void>;
@@ -498,7 +498,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     type: StockTransactionType;
     quantity: number;
     unit: UnitType;
-    referenceNote: string;
+    referenceNote?: string;
   }): Promise<boolean> => {
     setLoading(true);
     try {

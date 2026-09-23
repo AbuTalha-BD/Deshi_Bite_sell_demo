@@ -10,7 +10,6 @@ export const StockModal: React.FC = () => {
   const [type, setType] = useState<StockTransactionType>('STOCK_IN');
   const [unit, setUnit] = useState<UnitType>('KG');
   const [quantity, setQuantity] = useState<string>('5');
-  const [referenceNote, setReferenceNote] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -56,13 +55,11 @@ export const StockModal: React.FC = () => {
       type,
       quantity: qty,
       unit,
-      referenceNote: referenceNote || `${type} recorded manually`,
     });
 
     setIsSubmitting(false);
     if (success) {
       setIsStockModalOpen(false);
-      setReferenceNote('');
     }
   };
 
@@ -228,20 +225,6 @@ export const StockModal: React.FC = () => {
                 {unit === 'KG' ? 'Enter exact KG (e.g. 3, 3.4, 15.25)' : 'Enter whole integer count'}
               </span>
             </div>
-          </div>
-
-          {/* Reference Note */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-              BATCH / REFERENCE NOTE
-            </label>
-            <input
-              type="text"
-              value={referenceNote}
-              onChange={(e) => setReferenceNote(e.target.value)}
-              placeholder="e.g. Factory Batch #24 Delivery, damaged carton write-off"
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-white"
-            />
           </div>
 
           {/* Footer */}

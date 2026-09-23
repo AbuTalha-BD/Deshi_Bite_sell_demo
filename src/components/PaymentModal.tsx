@@ -15,7 +15,6 @@ export const PaymentModal: React.FC = () => {
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
   const [paymentAmount, setPaymentAmount] = useState<number | ''>('');
   const [paymentMethod, setPaymentMethod] = useState<string>('Cash in Hand');
-  const [referenceNote, setReferenceNote] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync selected agent
@@ -63,13 +62,11 @@ export const PaymentModal: React.FC = () => {
       agentId: targetAgent.id,
       amount: numAmount,
       paymentMethod,
-      referenceNote: referenceNote || `Due clearance by ${targetAgent.name}`,
     });
 
     setIsSubmitting(false);
     if (success) {
       setIsPaymentModalOpen(false);
-      setReferenceNote('');
     }
   };
 
@@ -211,20 +208,6 @@ export const PaymentModal: React.FC = () => {
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Payment Method / Reference Note */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-              PAYMENT METHOD / REFERENCE NOTE
-            </label>
-            <input
-              type="text"
-              value={referenceNote}
-              onChange={(e) => setReferenceNote(e.target.value)}
-              placeholder="e.g. Cash in hand, bKash TrxID, Bank deposit"
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-purple-500 bg-white"
-            />
           </div>
         </div>
 

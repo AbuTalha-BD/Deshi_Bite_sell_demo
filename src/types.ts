@@ -112,7 +112,7 @@ export interface StockTransaction {
   type: StockTransactionType;
   quantity: number;
   unit: UnitType;
-  referenceNote: string;
+  referenceNote?: string;
   recordedBy: string;
   date: string;
   time: string;
@@ -131,7 +131,7 @@ export interface PaymentRecord {
   previousDue: number;
   remainingDue: number;
   paymentMethod: string;
-  referenceNote: string;
+  referenceNote?: string;
   recordedBy: string;
   date: string;
   time: string;

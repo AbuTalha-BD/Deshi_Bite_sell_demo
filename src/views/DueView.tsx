@@ -300,16 +300,11 @@ export const DueView: React.FC = () => {
                       </span>
                     </div>
 
-                    {/* Bottom Row: Recorded By & Reference Note */}
+                    {/* Bottom Row: Recorded By */}
                     <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 pt-2 border-t border-slate-200/80">
                       <span>
                         Recorded By: <strong className="text-slate-700 font-semibold">{p.recordedBy}</strong>
                       </span>
-                      {p.referenceNote && (
-                        <span className="italic text-slate-600 truncate max-w-[160px]" title={p.referenceNote}>
-                          {p.referenceNote}
-                        </span>
-                      )}
                     </div>
                   </div>
                 );
@@ -326,7 +321,6 @@ export const DueView: React.FC = () => {
                     <th className="py-3 px-4 text-right">Amount Paid</th>
                     <th className="py-3 px-4">Payment Method</th>
                     <th className="py-3 px-4">Recorded By</th>
-                    <th className="py-3 px-4">Reference Note</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -365,10 +359,6 @@ export const DueView: React.FC = () => {
                         </td>
 
                         <td className="py-3 px-4 text-slate-700 font-medium whitespace-nowrap">{p.recordedBy}</td>
-
-                        <td className="py-3 px-4 text-slate-600 italic max-w-xs truncate">
-                          {p.referenceNote || 'Due payment'}
-                        </td>
                       </tr>
                     );
                   })}

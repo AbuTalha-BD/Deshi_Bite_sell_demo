@@ -3,7 +3,7 @@
 /* Global Font Stack: Prioritize bold Bengali fonts for Taka currency symbol (৳) */
 body {
   font-family: 'Plus Jakarta Sans', 'Noto Sans Bengali', 'Hind Siliguri', system-ui, -apple-system, sans-serif;
-  background-color: #EDF2F7;
+  background-color: #FFFFFF;
   color: #0F172A;
 }
 

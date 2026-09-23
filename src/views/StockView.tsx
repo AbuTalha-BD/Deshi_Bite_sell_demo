@@ -29,9 +29,7 @@ export const StockView: React.FC = () => {
 
   const filteredTransactions = useMemo(() => {
     return stockTransactions.filter((tx) => {
-      const matchSearch =
-        tx.productName.toLowerCase().includes(search.toLowerCase().trim()) ||
-        (tx.referenceNote && tx.referenceNote.toLowerCase().includes(search.toLowerCase().trim()));
+      const matchSearch = tx.productName.toLowerCase().includes(search.toLowerCase().trim());
       if (!matchSearch) return false;
 
       if (selectedType !== 'ALL' && tx.type !== selectedType) return false;
@@ -159,7 +157,7 @@ export const StockView: React.FC = () => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by product or reference..."
+            placeholder="Search products..."
             className="w-full pl-9 pr-3 py-2 sm:py-1.5 text-xs rounded-xl border border-slate-300/90 focus:outline-hidden focus:border-purple-500 bg-white"
           />
         </div>
@@ -249,7 +247,7 @@ export const StockView: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Bottom Row: Recorded By & Reference Note */}
+                    {/* Bottom Row: Recorded By */}
                     <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 pt-2 border-t border-slate-200/80">
                       <div className="flex items-center gap-1">
                         <User className="w-3 h-3 text-slate-400 shrink-0" />
@@ -257,12 +255,6 @@ export const StockView: React.FC = () => {
                           By: <strong className="text-slate-700 font-semibold">{tx.recordedBy}</strong>
                         </span>
                       </div>
-
-                      {tx.referenceNote && (
-                        <span className="italic text-slate-600 truncate max-w-[170px]" title={tx.referenceNote}>
-                          {tx.referenceNote}
-                        </span>
-                      )}
                     </div>
                   </div>
                 );
@@ -280,7 +272,6 @@ export const StockView: React.FC = () => {
                     <th className="py-3 px-4 text-right">Quantity</th>
                     <th className="py-3 px-4 text-center">Stock Flow</th>
                     <th className="py-3 px-4">Recorded By</th>
-                    <th className="py-3 px-4">Reference Note</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -339,10 +330,6 @@ export const StockView: React.FC = () => {
                         </td>
 
                         <td className="py-3 px-4 font-semibold text-slate-700 whitespace-nowrap">{tx.recordedBy}</td>
-
-                        <td className="py-3 px-4 text-slate-600 italic max-w-xs truncate">
-                          {tx.referenceNote || 'N/A'}
-                        </td>
                       </tr>
                     );
                   })}

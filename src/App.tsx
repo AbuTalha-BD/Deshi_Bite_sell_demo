@@ -31,7 +31,7 @@ const MainLayout: React.FC = () => {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-[#EDF2F7] flex flex-col justify-center">
+      <div className="min-h-screen bg-white flex flex-col justify-center">
         <ToastContainer />
         <LoginView />
       </div>
@@ -39,7 +39,7 @@ const MainLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#EDF2F7] text-slate-900 flex flex-col overflow-x-hidden w-full">
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col overflow-x-hidden w-full">
       {/* Toast Notification Container */}
       <ToastContainer />
 
