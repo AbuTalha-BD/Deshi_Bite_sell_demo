@@ -20,9 +20,11 @@ interface TabItem {
 }
 
 export const NavigationTabs: React.FC = () => {
-  const { activeTab, setActiveTab, currentUser, notifications, setIsSellModalOpen } = useApp();
+  const { activeTab, setActiveTab, currentUser, users, notifications, setIsSellModalOpen } = useApp();
 
   const isAdmin = currentUser?.role === 'ADMIN';
+
+  const pendingExecutivesCount = users.filter((u) => u.role === 'AGENT' && u.status === 'PENDING').length;
 
   const adminTabs: TabItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -30,7 +32,7 @@ export const NavigationTabs: React.FC = () => {
       id: 'agents',
       label: 'Executives',
       icon: Users,
-      badge: notifications.filter((n) => !n.isRead && n.type === 'AGENT_REGISTERED').length || undefined,
+      badge: pendingExecutivesCount > 0 ? pendingExecutivesCount : undefined,
     },
     { id: 'products', label: 'Product', icon: Package },
     { id: 'stock', label: 'Stock Management', icon: Boxes },
@@ -69,7 +71,7 @@ export const NavigationTabs: React.FC = () => {
             <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-600'}`} />
             <span>{tab.label}</span>
             {tab.badge ? (
-              <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[9px] font-extrabold animate-pulse">
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[9px] font-extrabold">
                 {tab.badge}
               </span>
             ) : null}

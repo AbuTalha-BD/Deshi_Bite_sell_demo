@@ -79,9 +79,38 @@ function loadDatabase(): DatabaseSchema {
     return initialDb;
   }
 
-  // Purge any rejected agents so admin panel never shows them
+  // Purge any rejected agents and the other 2 agents (Rahim Ahmed, Karim Mollah)
   if (loaded.users) {
-    loaded.users = loaded.users.filter((u) => u.status !== 'REJECTED');
+    loaded.users = loaded.users.filter(
+      (u) => u.status !== 'REJECTED' && u.name !== 'Rahim Ahmed' && u.name !== 'Karim Mollah'
+    );
+    // Ensure Toha Jamil has zero sales and zero due
+    loaded.users.forEach((u) => {
+      if (u.name === 'Toha Jamil') {
+        u.totalSales = 0;
+        u.totalPaid = 0;
+        u.currentDue = 0;
+        u.status = 'ACTIVE';
+      }
+    });
+  }
+
+  // Clear sales and payments so total sell is zero and total due is zero
+  loaded.sales = [];
+  loaded.payments = [];
+
+  // Clean stock transactions from sales
+  if (loaded.stockTransactions) {
+    loaded.stockTransactions = loaded.stockTransactions.filter(
+      (tx) => tx.type !== 'SALE' && tx.type !== 'SALE_OUT'
+    );
+  }
+
+  // Clean any pending registration notifications
+  if (loaded.notifications) {
+    loaded.notifications = loaded.notifications.filter(
+      (n) => !n.title.includes('Registration Pending')
+    );
   }
 
   // Ensure default low stock alert for KG is 0.5 instead of 5

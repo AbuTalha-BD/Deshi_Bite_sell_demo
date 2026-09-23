@@ -22,6 +22,7 @@ import {
 export const Navbar: React.FC = () => {
   const {
     currentUser,
+    users,
     logout,
     notifications,
     setIsNotificationModalOpen,
@@ -40,10 +41,13 @@ export const Navbar: React.FC = () => {
 
   const isAdmin = currentUser?.role === 'ADMIN';
 
+  const pendingExecutivesCount = users.filter((u) => u.role === 'AGENT' && u.status === 'PENDING').length;
+
   const navItems = isAdmin
     ? [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'agents', label: 'Executives', icon: Users, badge: notifications.filter((n) => n.title.includes('Agent') || n.title.includes('Executive')).length || undefined },
+        { id: 'agents', label: 'Executives', icon: Users, badge: pendingExecutivesCount > 0 ? pendingExecutivesCount : undefined },
+        { id: 'products', label: 'Product', icon: Package },
         { id: 'stock', label: 'Stock Management', icon: Boxes },
         { id: 'sales', label: 'All Sales & Invoices', icon: ShoppingCart },
         { id: 'due', label: 'Due & Payments', icon: DollarSign },
@@ -52,6 +56,7 @@ export const Navbar: React.FC = () => {
       ]
     : [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'products', label: 'Product', icon: Package },
         { id: 'sales', label: 'My Sales & Memos', icon: ShoppingCart },
         { id: 'due', label: 'My Due & Payments', icon: DollarSign },
         { id: 'settings', label: 'Profile & Settings', icon: Settings },

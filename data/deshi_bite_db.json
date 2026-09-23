@@ -142,7 +142,8 @@
       "stockPcs": 0,
       "lowStockThresholdKg": 0.5,
       "lowStockThresholdPcs": 10,
-      "active": true
+      "active": false,
+      "updatedAt": "23 September 2026"
     }
   ],
   "users": [
@@ -161,222 +162,21 @@
       "email": "admin@deshibite.com"
     },
     {
-      "id": "AGENT-0001",
-      "name": "Rahim Ahmed",
-      "phone": "01711122334",
-      "passwordHash": "12345",
-      "role": "AGENT",
-      "status": "ACTIVE",
-      "totalSales": 15600,
-      "totalPaid": 11480,
-      "currentDue": 4120,
-      "address": "Mirpur-10, Dhaka",
-      "joinedDate": "12 September 2026"
-    },
-    {
-      "id": "AGENT-0002",
-      "name": "Karim Mollah",
-      "phone": "01822233445",
-      "passwordHash": "12345",
-      "role": "AGENT",
-      "status": "ACTIVE",
-      "totalSales": 9800,
-      "totalPaid": 9800,
-      "currentDue": 0,
-      "address": "Dhanmondi 27, Dhaka",
-      "joinedDate": "14 September 2026"
-    },
-    {
       "id": "AGENT-0003",
       "name": "Toha Jamil",
       "phone": "01763213388",
       "passwordHash": "123456",
       "role": "AGENT",
       "status": "ACTIVE",
-      "totalSales": 900,
-      "totalPaid": 500,
-      "currentDue": 400,
+      "totalSales": 0,
+      "totalPaid": 0,
+      "currentDue": 0,
       "address": "",
       "joinedDate": "17 September 2026"
     }
   ],
-  "sales": [
-    {
-      "id": "SALE-1789653576057-4",
-      "invoiceNo": "DB-20260917-00004",
-      "agentId": "AGENT-0003",
-      "agentName": "Toha Jamil",
-      "customerName": "Direct Customer",
-      "customerPhone": "",
-      "customerAddress": "",
-      "saleType": "RETAIL",
-      "items": [
-        {
-          "productId": "PROD-1001",
-          "productName": "Chicken Samosa",
-          "unit": "KG",
-          "quantity": 0.5,
-          "unitPrice": 600,
-          "subtotal": 300
-        },
-        {
-          "productId": "PROD-1011",
-          "productName": "Borfi",
-          "unit": "KG",
-          "quantity": 1,
-          "unitPrice": 600,
-          "subtotal": 600
-        }
-      ],
-      "subtotal": 900,
-      "discount": 0,
-      "grandTotal": 900,
-      "paymentStatus": "UNPAID",
-      "createdAtDate": "17 September 2026",
-      "createdAtTime": "07:59 PM",
-      "timestamp": 1789653576056
-    },
-    {
-      "id": "SALE-20260916-50827",
-      "invoiceNo": "DB-20260916-50827",
-      "agentId": "AGENT-0001",
-      "agentName": "Rahim Ahmed",
-      "customerName": "Direct Customer",
-      "customerPhone": "01700998877",
-      "customerAddress": "Pallabi, Mirpur",
-      "saleType": "RETAIL",
-      "items": [
-        {
-          "productId": "PROD-1007",
-          "productName": "Frozen Paratha",
-          "unit": "PCS",
-          "quantity": 10,
-          "unitPrice": 15,
-          "subtotal": 150
-        },
-        {
-          "productId": "PROD-1008",
-          "productName": "Dal Puri",
-          "unit": "PCS",
-          "quantity": 5,
-          "unitPrice": 10,
-          "subtotal": 50
-        }
-      ],
-      "subtotal": 200,
-      "discount": 0,
-      "grandTotal": 200,
-      "paymentStatus": "UNPAID",
-      "createdAtDate": "16 September 2026",
-      "createdAtTime": "02:40 PM",
-      "timestamp": 1789569600000
-    },
-    {
-      "id": "SALE-20260915-00101",
-      "invoiceNo": "DB-20260915-00101",
-      "agentId": "AGENT-0001",
-      "agentName": "Rahim Ahmed",
-      "customerName": "Bismillah Food Corner",
-      "customerPhone": "01700998877",
-      "customerAddress": "Rampura Bazar, Dhaka",
-      "saleType": "WHOLESALE",
-      "items": [
-        {
-          "productId": "PROD-1002",
-          "productName": "Chicken Nugget",
-          "unit": "KG",
-          "quantity": 2,
-          "unitPrice": 670,
-          "subtotal": 1340
-        },
-        {
-          "productId": "PROD-1006",
-          "productName": "Vegetable Spring Roll",
-          "unit": "PCS",
-          "quantity": 20,
-          "unitPrice": 17,
-          "subtotal": 340
-        }
-      ],
-      "subtotal": 1680,
-      "discount": 0,
-      "grandTotal": 1680,
-      "paymentStatus": "PAID",
-      "createdAtDate": "15 September 2026",
-      "createdAtTime": "11:30 AM",
-      "timestamp": 1789474200000
-    },
-    {
-      "id": "SALE-20260916-00102",
-      "invoiceNo": "DB-20260916-00102",
-      "agentId": "AGENT-0002",
-      "agentName": "Karim Mollah",
-      "customerName": "Shahin Restaurant",
-      "customerPhone": "01811223344",
-      "customerAddress": "Mohammadpur Town Hall",
-      "saleType": "WHOLESALE",
-      "items": [
-        {
-          "productId": "PROD-1001",
-          "productName": "Chicken Samosa",
-          "unit": "KG",
-          "quantity": 1,
-          "unitPrice": 580,
-          "subtotal": 580
-        },
-        {
-          "productId": "PROD-1003",
-          "productName": "Fish Finger",
-          "unit": "KG",
-          "quantity": 1,
-          "unitPrice": 760,
-          "subtotal": 760
-        }
-      ],
-      "subtotal": 1340,
-      "discount": 200,
-      "grandTotal": 1140,
-      "paymentStatus": "PAID",
-      "createdAtDate": "16 September 2026",
-      "createdAtTime": "10:15 AM",
-      "timestamp": 1789560900000
-    }
-  ],
+  "sales": [],
   "stockTransactions": [
-    {
-      "id": "STX-1789653576057-945",
-      "productId": "PROD-1011",
-      "productName": "Borfi",
-      "type": "SALE_OUT",
-      "quantity": 1,
-      "unit": "KG",
-      "referenceNote": "Deducted via Sale DB-20260917-00004",
-      "recordedBy": "Toha Jamil",
-      "date": "17 September 2026",
-      "time": "07:59 PM",
-      "createdAtDate": "17 September 2026",
-      "createdAtTime": "07:59 PM",
-      "stockBefore": 2,
-      "stockAfter": 1,
-      "timestamp": 1789653576056
-    },
-    {
-      "id": "STX-1789653576057-980",
-      "productId": "PROD-1001",
-      "productName": "Chicken Samosa",
-      "type": "SALE_OUT",
-      "quantity": 0.5,
-      "unit": "KG",
-      "referenceNote": "Deducted via Sale DB-20260917-00004",
-      "recordedBy": "Toha Jamil",
-      "date": "17 September 2026",
-      "time": "07:59 PM",
-      "createdAtDate": "17 September 2026",
-      "createdAtTime": "07:59 PM",
-      "stockBefore": 12.5,
-      "stockAfter": 12,
-      "timestamp": 1789653576056
-    },
     {
       "id": "STX-20260914-001",
       "productId": "PROD-1002",
@@ -410,92 +210,22 @@
       "stockBefore": 0,
       "stockAfter": 15,
       "timestamp": 1789461000000
-    },
-    {
-      "id": "STX-20260915-003",
-      "productId": "PROD-1002",
-      "productName": "Chicken Nugget",
-      "type": "SALE_OUT",
-      "quantity": 2,
-      "unit": "KG",
-      "referenceNote": "Deducted via Sale DB-20260915-00101",
-      "recordedBy": "Rahim Ahmed",
-      "date": "15 September 2026",
-      "time": "11:30 AM",
-      "createdAtDate": "15 September 2026",
-      "createdAtTime": "11:30 AM",
-      "stockBefore": 20,
-      "stockAfter": 18,
-      "timestamp": 1789474200000
     }
   ],
-  "payments": [
-    {
-      "id": "PAY-20260917-1587",
-      "agentId": "AGENT-0003",
-      "agentName": "Toha Jamil",
-      "amount": 500,
-      "previousDue": 900,
-      "remainingDue": 400,
-      "paymentMethod": "Cash in Hand",
-      "referenceNote": "Due clearance by Toha Jamil",
-      "recordedBy": "Admin Manager",
-      "date": "17 September 2026",
-      "time": "08:07 PM",
-      "timestamp": 1789654074724,
-      "createdAtDate": "17 September 2026",
-      "createdAtTime": "08:07 PM"
-    },
-    {
-      "id": "PAY-20260916-8920",
-      "agentId": "AGENT-0002",
-      "agentName": "Karim Mollah",
-      "amount": 1200,
-      "previousDue": 1200,
-      "remainingDue": 0,
-      "paymentMethod": "bKash Merchant",
-      "referenceNote": "Due clearance payment TrxID: 9X87K",
-      "recordedBy": "Admin Manager",
-      "date": "16 September 2026",
-      "time": "02:40 PM",
-      "timestamp": 1789569600000,
-      "createdAtDate": "16 September 2026",
-      "createdAtTime": "02:40 PM"
-    },
-    {
-      "id": "PAY-20260916-5302",
-      "agentId": "AGENT-0001",
-      "agentName": "Rahim Ahmed",
-      "amount": 580,
-      "previousDue": 4700,
-      "remainingDue": 4120,
-      "paymentMethod": "Cash In Hand",
-      "referenceNote": "Partial due payment at depot",
-      "recordedBy": "Admin Manager",
-      "date": "16 September 2026",
-      "time": "02:39 PM",
-      "timestamp": 1789569540000,
-      "createdAtDate": "16 September 2026",
-      "createdAtTime": "02:39 PM"
-    },
-    {
-      "id": "PAY-20260915-001",
-      "agentId": "AGENT-0001",
-      "agentName": "Rahim Ahmed",
-      "amount": 5000,
-      "previousDue": 9700,
-      "remainingDue": 4700,
-      "paymentMethod": "Bank Transfer (City Bank)",
-      "referenceNote": "Bank deposit confirmation memo",
-      "recordedBy": "Admin Manager",
-      "date": "15 September 2026",
-      "time": "04:20 PM",
-      "timestamp": 1789491600000,
-      "createdAtDate": "15 September 2026",
-      "createdAtTime": "04:20 PM"
-    }
-  ],
+  "payments": [],
   "notifications": [
+    {
+      "id": "NOTIF-1790170760297",
+      "title": "Payment Received & Due Updated",
+      "message": "Admin recorded payment of ৳4,120. Your remaining due is now ৳0.",
+      "type": "SUCCESS",
+      "isRead": false,
+      "date": "23 September 2026",
+      "time": "07:39 PM",
+      "targetRole": "AGENT",
+      "agentId": "AGENT-0001",
+      "timestamp": 1790170760291
+    },
     {
       "id": "NOTIF-1789654074724",
       "title": "Payment Received & Due Updated",
@@ -520,17 +250,6 @@
       "timestamp": 1789653576056
     },
     {
-      "id": "NOTIF-1789653487532",
-      "title": "New Agent Registration Pending",
-      "message": "Toha Jamil (01763213388) has applied for an agent account.",
-      "type": "INFO",
-      "isRead": true,
-      "date": "17 September 2026",
-      "time": "07:58 PM",
-      "targetRole": "ADMIN",
-      "timestamp": 1789653487531
-    },
-    {
       "id": "NOTIF-001",
       "title": "Low Stock Alert",
       "message": "Kolija Singara stock has fallen to 4 KG (below threshold of 5 KG).",
@@ -540,17 +259,6 @@
       "time": "07:40 PM",
       "targetRole": "ADMIN",
       "timestamp": 1789587600000
-    },
-    {
-      "id": "NOTIF-002",
-      "title": "New Agent Registration Pending",
-      "message": "Tanvir Hasan (01933344556) has applied for an agent account.",
-      "type": "INFO",
-      "isRead": true,
-      "date": "16 September 2026",
-      "time": "09:30 AM",
-      "targetRole": "ADMIN",
-      "timestamp": 1789551000000
     },
     {
       "id": "NOTIF-003",
@@ -565,6 +273,28 @@
     }
   ],
   "logs": [
+    {
+      "id": "LOG-1790170760297",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Payment Recorded",
+      "referenceId": "PAY-20260923-4901",
+      "details": "Received ৳4,120 from Rahim Ahmed. Remaining due: ৳0",
+      "date": "23 September 2026",
+      "time": "07:39 PM",
+      "timestamp": 1790170760291
+    },
+    {
+      "id": "LOG-1790168461496",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Product Updated",
+      "referenceId": "PROD-1011",
+      "details": "Updated details/pricing for \"Borfi\"",
+      "date": "23 September 2026",
+      "time": "07:01 PM",
+      "timestamp": 1790168461495
+    },
     {
       "id": "LOG-1789907712110",
       "user": "Admin Manager",
