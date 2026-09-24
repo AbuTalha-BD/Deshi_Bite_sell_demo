@@ -105,6 +105,7 @@ interface AppContextType {
     unit: UnitType;
     referenceNote?: string;
   }) => Promise<boolean>;
+  deleteStockTransaction: (id: string) => Promise<boolean>;
   updateAgentStatus: (agentId: string, status: 'ACTIVE' | 'REJECTED' | 'SUSPENDED') => Promise<boolean>;
   markNotificationsAsRead: () => Promise<void>;
   syncWithGoogleSheets: (scriptUrl?: string) => Promise<boolean>;
@@ -527,6 +528,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const deleteStockTransaction = async (id: string): Promise<boolean> => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/stock/${id}`, { method: 'DELETE' });
+      const resData = await res.json();
+      if (!res.ok) {
+        showToast(resData.error || 'Failed to delete transaction', 'error');
+        setLoading(false);
+        return false;
+      }
+      showToast('Stock transaction removed', 'success');
+      setStockTransactions((prev) => prev.filter((tx) => tx.id !== id));
+      await refreshData();
+      setLoading(false);
+      return true;
+    } catch (e) {
+      showToast('Failed to delete transaction', 'error');
+      setLoading(false);
+      return false;
+    }
+  };
+
   const updateAgentStatus = async (agentId: string, status: 'ACTIVE' | 'REJECTED' | 'SUSPENDED'): Promise<boolean> => {
     setLoading(true);
     try {
@@ -729,6 +752,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         deleteProduct,
         deleteAgent,
         recordStockChange,
+        deleteStockTransaction,
         updateAgentStatus,
         markNotificationsAsRead,
         syncWithGoogleSheets,

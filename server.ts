@@ -99,10 +99,10 @@ function loadDatabase(): DatabaseSchema {
   loaded.sales = [];
   loaded.payments = [];
 
-  // Clean stock transactions from sales
+  // Clean stock transactions from sales and clear pre-existing seed stock in records
   if (loaded.stockTransactions) {
     loaded.stockTransactions = loaded.stockTransactions.filter(
-      (tx) => tx.type !== 'SALE' && tx.type !== 'SALE_OUT'
+      (tx) => tx.type !== 'SALE' && tx.type !== 'SALE_OUT' && !tx.id.startsWith('STX-20260914') && !tx.id.startsWith('STX-20260915')
     );
   }
 
@@ -899,6 +899,33 @@ export async function createExpressApp() {
 
     saveDatabase(db);
     res.json({ success: true, transaction: stx, updatedProduct: prod });
+  });
+
+  // Stock: Delete Transaction
+  app.delete('/api/stock/:id', (req, res) => {
+    const { id } = req.params;
+    const index = db.stockTransactions.findIndex((tx) => tx.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Stock transaction not found' });
+    }
+
+    const [deletedTx] = db.stockTransactions.splice(index, 1);
+
+    const dt = getBangladeshDateTime();
+    db.logs.unshift({
+      id: `LOG-${Date.now()}`,
+      user: 'Admin Manager',
+      role: 'ADMIN',
+      action: 'Stock Record Deleted',
+      referenceId: id,
+      details: `Removed stock record for "${deletedTx.productName}" (${deletedTx.quantity} ${deletedTx.unit})`,
+      date: dt.date,
+      time: dt.time,
+      timestamp: dt.timestamp,
+    });
+
+    saveDatabase(db);
+    res.json({ success: true, message: 'Stock transaction removed successfully', deletedId: id });
   });
 
   // Due Management: Record Payment / Clear Due

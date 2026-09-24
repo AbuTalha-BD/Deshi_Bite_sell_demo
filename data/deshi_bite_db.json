@@ -7,11 +7,12 @@
       "retailPricePcs": null,
       "wholesalePriceKg": 580,
       "wholesalePricePcs": null,
-      "stockKg": 28,
+      "stockKg": 2.5,
       "stockPcs": 0,
       "lowStockThresholdKg": 0.5,
       "lowStockThresholdPcs": 10,
-      "active": true
+      "active": true,
+      "updatedAt": "24 September 2026"
     },
     {
       "id": "PROD-1002",
@@ -20,7 +21,7 @@
       "retailPricePcs": null,
       "wholesalePriceKg": 670,
       "wholesalePricePcs": null,
-      "stockKg": 35,
+      "stockKg": 45,
       "stockPcs": 0,
       "lowStockThresholdKg": 0.5,
       "lowStockThresholdPcs": 10,
@@ -176,42 +177,7 @@
     }
   ],
   "sales": [],
-  "stockTransactions": [
-    {
-      "id": "STX-20260914-001",
-      "productId": "PROD-1002",
-      "productName": "Chicken Nugget",
-      "type": "STOCK_IN",
-      "quantity": 20,
-      "unit": "KG",
-      "referenceNote": "PO-BATCH-882 (Inbound)",
-      "recordedBy": "Admin Manager",
-      "date": "14 September 2026",
-      "time": "09:00 AM",
-      "createdAtDate": "14 September 2026",
-      "createdAtTime": "09:00 AM",
-      "stockBefore": 0,
-      "stockAfter": 20,
-      "timestamp": 1789376400000
-    },
-    {
-      "id": "STX-20260915-002",
-      "productId": "PROD-1001",
-      "productName": "Chicken Samosa",
-      "type": "STOCK_IN",
-      "quantity": 15,
-      "unit": "KG",
-      "referenceNote": "Kitchen Fresh Production",
-      "recordedBy": "Admin Manager",
-      "date": "15 September 2026",
-      "time": "08:30 AM",
-      "createdAtDate": "15 September 2026",
-      "createdAtTime": "08:30 AM",
-      "stockBefore": 0,
-      "stockAfter": 15,
-      "timestamp": 1789461000000
-    }
-  ],
+  "stockTransactions": [],
   "payments": [],
   "notifications": [
     {
@@ -273,6 +239,61 @@
     }
   ],
   "logs": [
+    {
+      "id": "LOG-1790255770662",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Stock Record Deleted",
+      "referenceId": "STX-1790255767374",
+      "details": "Removed stock record for \"Chicken Nugget\" (10 KG)",
+      "date": "24 September 2026",
+      "time": "07:16 PM",
+      "timestamp": 1790255770661
+    },
+    {
+      "id": "LOG-1790255767374",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Stock STOCK_IN",
+      "referenceId": "STX-1790255767374",
+      "details": "STOCK_IN of 10 KG for \"Chicken Nugget\". New Stock: 45 KG, 0 PCS.",
+      "date": "24 September 2026",
+      "time": "07:16 PM",
+      "timestamp": 1790255767357
+    },
+    {
+      "id": "LOG-1790255318321",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Product Updated",
+      "referenceId": "PROD-1001",
+      "details": "Updated details/pricing for \"Chicken Samosa\"",
+      "date": "24 September 2026",
+      "time": "07:08 PM",
+      "timestamp": 1790255318321
+    },
+    {
+      "id": "LOG-1790255153311",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Agent Status Updated to ACTIVE",
+      "referenceId": "AGENT-0003",
+      "details": "Toha Jamil status updated to ACTIVE",
+      "date": "24 September 2026",
+      "time": "07:05 PM",
+      "timestamp": 1790255153310
+    },
+    {
+      "id": "LOG-1790255150094",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Agent Status Updated to SUSPENDED",
+      "referenceId": "AGENT-0003",
+      "details": "Toha Jamil status updated to SUSPENDED",
+      "date": "24 September 2026",
+      "time": "07:05 PM",
+      "timestamp": 1790255150092
+    },
     {
       "id": "LOG-1790170760297",
       "user": "Admin Manager",

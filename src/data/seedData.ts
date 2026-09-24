@@ -178,40 +178,7 @@ export const INITIAL_USERS: User[] = [
 
 export const INITIAL_SALES: Sale[] = [];
 
-export const INITIAL_STOCK_TRANSACTIONS: StockTransaction[] = [
-  {
-    id: 'STX-20260914-001',
-    productId: 'PROD-1002',
-    productName: 'Chicken Nugget',
-    type: 'STOCK_IN',
-    quantity: 20,
-    unit: 'KG',
-    recordedBy: 'Admin Manager',
-    date: '14 September 2026',
-    time: '09:00 AM',
-    createdAtDate: '14 September 2026',
-    createdAtTime: '09:00 AM',
-    stockBefore: 0,
-    stockAfter: 20,
-    timestamp: 1789376400000,
-  },
-  {
-    id: 'STX-20260915-002',
-    productId: 'PROD-1001',
-    productName: 'Chicken Samosa',
-    type: 'STOCK_IN',
-    quantity: 15,
-    unit: 'KG',
-    recordedBy: 'Admin Manager',
-    date: '15 September 2026',
-    time: '08:30 AM',
-    createdAtDate: '15 September 2026',
-    createdAtTime: '08:30 AM',
-    stockBefore: 0,
-    stockAfter: 15,
-    timestamp: 1789461000000,
-  },
-];
+export const INITIAL_STOCK_TRANSACTIONS: StockTransaction[] = [];
 
 export const INITIAL_PAYMENTS: PaymentRecord[] = [];
 
