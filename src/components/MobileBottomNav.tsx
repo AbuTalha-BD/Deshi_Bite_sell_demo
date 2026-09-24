@@ -18,66 +18,56 @@ export const MobileBottomNav: React.FC = () => {
     return (
       <nav
         style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 6px))' }}
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-1 py-1.5 grid grid-cols-6 items-center shadow-[0_-4px_20px_rgba(15,23,42,0.06)]"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-2 py-1.5 grid grid-cols-5 items-center shadow-[0_-4px_20px_rgba(15,23,42,0.06)]"
       >
         <button
           onClick={() => setActiveTab('dashboard')}
-          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-0.5 rounded-xl transition-all cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
             activeTab === 'dashboard' ? 'text-purple-700 font-bold bg-purple-50' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-[9px] sm:text-[10px] whitespace-nowrap">Home</span>
+          <span className="text-[10px] whitespace-nowrap">Home</span>
         </button>
 
         <button
           onClick={() => setActiveTab('products')}
-          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-0.5 rounded-xl transition-all cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
             activeTab === 'products' ? 'text-purple-700 font-bold bg-purple-50' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           <Package className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-[9px] sm:text-[10px] whitespace-nowrap">Product</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('stock')}
-          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-0.5 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'stock' ? 'text-purple-700 font-bold bg-purple-50' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Boxes className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-[9px] sm:text-[10px] whitespace-nowrap">Stock</span>
+          <span className="text-[10px] whitespace-nowrap">Product</span>
         </button>
 
         <button
           onClick={() => setActiveTab('sales')}
-          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-0.5 rounded-xl transition-all cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
             activeTab === 'sales' ? 'text-purple-700 font-bold bg-purple-50' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-[9px] sm:text-[10px] whitespace-nowrap">Sales</span>
+          <span className="text-[10px] whitespace-nowrap">Sales</span>
         </button>
 
         <button
           onClick={() => setActiveTab('due')}
-          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-0.5 rounded-xl transition-all cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
             activeTab === 'due' ? 'text-purple-700 font-bold bg-purple-50' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-[9px] sm:text-[10px] whitespace-nowrap">Due</span>
+          <span className="text-[10px] whitespace-nowrap">Due</span>
         </button>
 
         <button
           onClick={() => setActiveTab('agents')}
-          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-0.5 rounded-xl transition-all cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
             activeTab === 'agents' ? 'text-purple-700 font-bold bg-purple-50' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-[9px] sm:text-[10px] whitespace-nowrap">Execs</span>
+          <span className="text-[10px] whitespace-nowrap">Executive</span>
         </button>
       </nav>
     );
