@@ -47,7 +47,7 @@ const MainLayout: React.FC = () => {
       <Navbar />
 
       {/* Main Workspace Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24 lg:pb-12">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-36 sm:pb-28 lg:pb-12 space-y-5 sm:space-y-6">
         {/* Navigation Tabs (Desktop) */}
         <NavigationTabs />
 

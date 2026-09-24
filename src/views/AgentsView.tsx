@@ -42,18 +42,18 @@ export const AgentsView: React.FC = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="app-card p-4 sm:p-5 rounded-2xl">
-          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Active Sales Executives</span>
-          <div className="text-2xl font-extrabold text-slate-900 mt-1">{activeCount} Executives</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="app-card p-3.5 sm:p-5 rounded-2xl">
+          <span className="text-[10px] sm:text-[11px] font-bold text-slate-600 uppercase tracking-wider">Active Sales Executives</span>
+          <div className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">{activeCount} Executives</div>
           <p className="text-[11px] text-slate-600 mt-0.5">Authorized to record orders</p>
         </div>
 
-        <div className="app-card p-4 sm:p-5 rounded-2xl">
-          <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Pending Registrations</span>
+        <div className="app-card p-3.5 sm:p-5 rounded-2xl">
+          <span className="text-[10px] sm:text-[11px] font-bold text-amber-700 uppercase tracking-wider">Pending Registrations</span>
           <div
-            className={`text-2xl font-extrabold mt-1 ${
-              pendingCount > 0 ? 'text-amber-600 animate-pulse' : 'text-slate-900'
+            className={`text-xl sm:text-2xl font-extrabold mt-1 ${
+              pendingCount > 0 ? 'text-amber-600 font-extrabold' : 'text-slate-900'
             }`}
           >
             {pendingCount} Pending
@@ -61,11 +61,11 @@ export const AgentsView: React.FC = () => {
           <p className="text-[11px] text-slate-600 mt-0.5">Awaiting Administrator review</p>
         </div>
 
-        <div className="app-card p-4 sm:p-5 rounded-2xl">
-          <span className={`text-[11px] font-bold uppercase tracking-wider ${totalDue < 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+        <div className="app-card p-3.5 sm:p-5 rounded-2xl">
+          <span className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider ${totalDue < 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
             {totalDue < 0 ? 'Total Advance Balance' : 'Total Outstanding Due'}
           </span>
-          <div className={`text-2xl font-black mt-1 flex items-baseline gap-0.5 ${totalDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+          <div className={`text-xl sm:text-2xl font-black mt-1 flex items-baseline gap-0.5 ${totalDue < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
             <span className="font-black select-none">{totalDue < 0 ? '-৳' : '৳'}</span>
             <span>{Math.abs(totalDue).toLocaleString()}</span>
           </div>
@@ -75,31 +75,33 @@ export const AgentsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="app-card flex items-center gap-1.5 sm:gap-2 p-2 rounded-2xl max-w-full overflow-x-auto">
-        {(['ALL', 'ACTIVE', 'PENDING', 'SUSPENDED'] as const).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => setFilter(mode)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              filter === mode
-                ? 'bg-purple-700 text-white shadow-xs'
-                : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            {mode === 'ALL'
-              ? 'All Executives'
-              : mode === 'ACTIVE'
-              ? 'Active'
-              : mode === 'PENDING'
-              ? `Pending (${pendingCount})`
-              : 'Suspended'}
-          </button>
-        ))}
+      {/* Filter Tabs (Responsive: Uniform 4-col grid on mobile, flex on desktop, no scrollbar line) */}
+      <div className="app-card p-1.5 sm:p-2 rounded-2xl">
+        <div className="grid grid-cols-4 sm:flex sm:items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar scrollbar-none">
+          {(['ALL', 'ACTIVE', 'PENDING', 'SUSPENDED'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setFilter(mode)}
+              className={`py-2 px-1 sm:px-3 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-bold text-center transition-all cursor-pointer whitespace-nowrap ${
+                filter === mode
+                  ? 'bg-purple-700 text-white shadow-xs'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              {mode === 'ALL'
+                ? 'All Executives'
+                : mode === 'ACTIVE'
+                ? 'Active'
+                : mode === 'PENDING'
+                ? `Pending (${pendingCount})`
+                : 'Suspended'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Agents List / Table */}
-      <div>
+      <div className="pb-8 sm:pb-0">
         {/* Mobile Card View */}
         <div className="block sm:hidden space-y-3.5">
           {agentUsers.length === 0 ? (
@@ -118,7 +120,7 @@ export const AgentsView: React.FC = () => {
                       agent.status === 'ACTIVE'
                         ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
                         : agent.status === 'PENDING'
-                        ? 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse'
+                        ? 'bg-amber-100 text-amber-800 border-amber-200'
                         : 'bg-rose-100 text-rose-800 border-rose-200'
                     }`}
                   >
