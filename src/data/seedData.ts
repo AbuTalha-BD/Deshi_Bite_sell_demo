@@ -1,4 +1,4 @@
-import { Product, User, Sale, StockTransaction, PaymentRecord, AppNotification, AdminLog, BusinessSettings } from '../types';
+import type { Product, User, Sale, StockTransaction, PaymentRecord, AppNotification, AdminLog, BusinessSettings } from '../types.ts';
 
 export const INITIAL_PRODUCTS: Product[] = [
   {

@@ -1,7 +1,6 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import { createServer as createViteServer } from 'vite';
 import {
   INITIAL_PRODUCTS,
   INITIAL_USERS,
@@ -11,29 +10,30 @@ import {
   INITIAL_NOTIFICATIONS,
   INITIAL_LOGS,
   INITIAL_SETTINGS,
-} from './src/data/seedData';
-import { Product, User, Sale, StockTransaction, PaymentRecord, AppNotification, AdminLog, BusinessSettings } from './src/types';
+} from './src/data/seedData.ts';
+import type {
+  Product,
+  User,
+  Sale,
+  StockTransaction,
+  PaymentRecord,
+  AppNotification,
+  AdminLog,
+  BusinessSettings,
+} from './src/types.ts';
 import {
   connectMongo,
   getMongoStatus,
   pushAllToMongo,
   pullAllFromMongo,
-  mongoUpsert,
-  mongoInsert,
   isMongoActive,
   getWritableDataDir,
-} from './server/mongo';
+  getActiveUri,
+} from './server/mongo.ts';
 
 const PORT = 3000;
 const DB_DIR = getWritableDataDir();
 const DB_FILE = path.join(DB_DIR, 'deshi_bite_db.json');
-
-// Helper to asynchronously sync mutations to MongoDB Cloud
-function syncToMongo(task: () => Promise<void>) {
-  if (isMongoActive()) {
-    task().catch((err) => console.warn('[MongoDB Sync Notice]:', err?.message || err));
-  }
-}
 
 interface DatabaseSchema {
   products: Product[];
@@ -48,7 +48,11 @@ interface DatabaseSchema {
 
 // Ensure data directory exists
 if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(DB_DIR, { recursive: true });
+  } catch {
+    // ignore
+  }
 }
 
 // Load or initialize DB
@@ -75,95 +79,48 @@ function loadDatabase(): DatabaseSchema {
       settings: INITIAL_SETTINGS,
     };
 
-    saveDatabase(initialDb);
+    saveDatabaseLocalSync(initialDb);
     return initialDb;
   }
 
-  // Purge any rejected agents and the other 2 agents (Rahim Ahmed, Karim Mollah)
-  if (loaded.users) {
-    loaded.users = loaded.users.filter(
-      (u) => u.status !== 'REJECTED' && u.name !== 'Rahim Ahmed' && u.name !== 'Karim Mollah'
-    );
-    // Ensure Toha Jamil has zero sales and zero due
-    loaded.users.forEach((u) => {
-      if (u.name === 'Toha Jamil') {
-        u.totalSales = 0;
-        u.totalPaid = 0;
-        u.currentDue = 0;
-        u.status = 'ACTIVE';
-      }
-    });
-  }
+  // Ensure default structures are always present
+  if (!loaded.products) loaded.products = INITIAL_PRODUCTS;
+  if (!loaded.users) loaded.users = INITIAL_USERS;
+  if (!loaded.sales) loaded.sales = [];
+  if (!loaded.stockTransactions) loaded.stockTransactions = [];
+  if (!loaded.payments) loaded.payments = [];
+  if (!loaded.notifications) loaded.notifications = [];
+  if (!loaded.logs) loaded.logs = [];
+  if (!loaded.settings) loaded.settings = INITIAL_SETTINGS;
 
-  // Clear sales and payments so total sell is zero and total due is zero
-  loaded.sales = [];
-  loaded.payments = [];
-
-  // Clean stock transactions from sales and clear pre-existing seed stock in records
-  if (loaded.stockTransactions) {
-    loaded.stockTransactions = loaded.stockTransactions.filter(
-      (tx) => tx.type !== 'SALE' && tx.type !== 'SALE_OUT' && !tx.id.startsWith('STX-20260914') && !tx.id.startsWith('STX-20260915')
-    );
-  }
-
-  // Clean any pending registration notifications
-  if (loaded.notifications) {
-    loaded.notifications = loaded.notifications.filter(
-      (n) => !n.title.includes('Registration Pending')
-    );
-  }
-
-  // Ensure default low stock alert for KG is 0.5 instead of 5
-  if (loaded.products) {
-    loaded.products.forEach((p) => {
-      if (p.lowStockThresholdKg === 5) {
-        p.lowStockThresholdKg = 0.5;
-      }
-    });
-  }
-
-  if (loaded.settings && (loaded.settings.lowStockDefaultKg === 5 || !loaded.settings.lowStockDefaultKg)) {
-    loaded.settings.lowStockDefaultKg = 0.5;
-  }
-
-  // Ensure payment dates are populated
-  if (loaded.payments) {
-    loaded.payments.forEach((p) => {
-      if (!p.createdAtDate && p.date) p.createdAtDate = p.date;
-      if (!p.createdAtTime && p.time) p.createdAtTime = p.time;
-      if (!p.date && p.createdAtDate) p.date = p.createdAtDate;
-      if (!p.time && p.createdAtTime) p.time = p.createdAtTime;
-    });
-  }
-
-  // Ensure stock transaction dates are populated
-  if (loaded.stockTransactions) {
-    loaded.stockTransactions.forEach((tx) => {
-      if (!tx.createdAtDate && tx.date) tx.createdAtDate = tx.date;
-      if (!tx.createdAtTime && tx.time) tx.createdAtTime = tx.time;
-      if (!tx.date && tx.createdAtDate) tx.date = tx.createdAtDate;
-      if (!tx.time && tx.createdAtTime) tx.time = tx.createdAtTime;
-    });
-  }
-
-  saveDatabase(loaded);
   return loaded;
 }
 
-function saveDatabase(newDb: DatabaseSchema) {
+// Synchronous local file writer
+function saveDatabaseLocalSync(newDb: DatabaseSchema) {
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(newDb, null, 2), 'utf-8');
   } catch (err) {
-    console.error('Failed to write db file:', err);
+    // Expected on read-only environments like Vercel Lambda
   }
+}
 
-  // Asynchronously synchronize all records to MongoDB Cloud Atlas
-  syncToMongo(async () => {
-    await pushAllToMongo(newDb);
-  });
+// Full persistence function: writes locally and awaits MongoDB Cloud sync
+async function saveDatabase(newDb: DatabaseSchema): Promise<void> {
+  saveDatabaseLocalSync(newDb);
+
+  // If MongoDB is connected, push changes and AWAIT so serverless lambda does not freeze prematurely
+  if (isMongoActive()) {
+    try {
+      await pushAllToMongo(newDb);
+    } catch (err: any) {
+      console.error('[MongoDB] Error saving state to MongoDB Cloud:', err?.message || err);
+    }
+  }
 }
 
 let db = loadDatabase();
+let lastMongoSyncTime = 0;
 
 // Bangladesh Time helper
 function getBangladeshDateTime() {
@@ -185,23 +142,57 @@ function getBangladeshDateTime() {
   return { date: dateStr, time: timeStr, timestamp: now.getTime() };
 }
 
+// Refresh state from MongoDB if connected
+async function refreshStateFromMongo(force = false) {
+  if (!isMongoActive()) {
+    if (process.env.MONGODB_URI || getActiveUri()) {
+      await connectMongo();
+    }
+  }
+
+  if (isMongoActive()) {
+    const now = Date.now();
+    // Cache for 2 seconds unless forced to avoid spamming read operations
+    if (force || now - lastMongoSyncTime > 2000) {
+      try {
+        const remoteData = await pullAllFromMongo();
+        if (remoteData && remoteData.products && remoteData.products.length > 0) {
+          db = remoteData;
+          saveDatabaseLocalSync(db);
+          lastMongoSyncTime = now;
+        } else if (!remoteData) {
+          // Empty remote DB: automatically seed initial products and admin
+          await pushAllToMongo(db);
+          lastMongoSyncTime = now;
+        }
+      } catch (err) {
+        console.warn('[MongoDB] Sync refresh notice:', err);
+      }
+    }
+  }
+}
+
 export async function createExpressApp() {
   const app = express();
   app.use(express.json());
 
-  // Connect to MongoDB Atlas Cloud if configured
+  // Universal CORS & Preflight handling
+  app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
+  // Attempt initial MongoDB connection
   try {
     const mongoRes = await connectMongo();
     if (mongoRes.success) {
-      const remoteData = await pullAllFromMongo();
-      if (remoteData && remoteData.products.length > 0) {
-        db = remoteData;
-        saveDatabase(db);
-        console.log(`[MongoDB] Synced state from Cloud MongoDB (${db.products.length} products, ${db.sales.length} sales)`);
-      } else {
-        await pushAllToMongo(db);
-        console.log('[MongoDB] Pushed initial dataset to MongoDB Atlas Cloud');
-      }
+      await refreshStateFromMongo(true);
+      console.log(`[MongoDB] Initialized with MongoDB database (${db.products.length} products, ${db.sales.length} sales)`);
     } else {
       console.log(`[MongoDB] Startup status: ${mongoRes.message}`);
     }
@@ -209,46 +200,54 @@ export async function createExpressApp() {
     console.warn('[MongoDB] Initial connection notice:', err?.message || err);
   }
 
-  // API ROUTES FIRST
+  const api = express.Router();
+
+  // Middleware: ensure MongoDB is connected and synced on API calls
+  api.use(async (req, res, next) => {
+    try {
+      if (req.method === 'GET' || req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
+        await refreshStateFromMongo(false);
+      }
+    } catch {
+      // Continue with in-memory state if network times out
+    }
+    next();
+  });
+
   // Health
-  app.get('/api/health', (req, res) => {
+  api.get('/health', (req, res) => {
     res.json({
       status: 'ok',
       service: 'DESHI BITE Enterprise Server',
       timezone: 'Asia/Dhaka',
       time: getBangladeshDateTime(),
       mongodbConnected: isMongoActive(),
+      platform: process.env.VERCEL ? 'vercel-serverless' : 'node',
     });
   });
 
   // MongoDB Atlas: Status endpoint
-  app.get('/api/mongodb/status', async (req, res) => {
+  api.get('/mongodb/status', async (req, res) => {
     const status = await getMongoStatus();
     res.json(status);
   });
 
   // MongoDB Atlas: Connect or update URI
-  app.post('/api/mongodb/connect', async (req, res) => {
+  api.post('/mongodb/connect', async (req, res) => {
     const { uri } = req.body;
     if (!uri?.trim()) {
       return res.status(400).json({ success: false, message: 'MongoDB connection string (URI) is required' });
     }
     const result = await connectMongo(uri.trim());
     if (result.success) {
-      const remoteData = await pullAllFromMongo();
-      if (remoteData && remoteData.products.length > 0) {
-        db = remoteData;
-        saveDatabase(db);
-      } else {
-        await pushAllToMongo(db);
-      }
+      await refreshStateFromMongo(true);
     }
     const status = await getMongoStatus();
     res.json({ ...result, status });
   });
 
   // MongoDB Atlas: Sync data
-  app.post('/api/mongodb/sync', async (req, res) => {
+  api.post('/mongodb/sync', async (req, res) => {
     const { direction } = req.body; // 'push' or 'pull'
     if (!isMongoActive()) {
       return res.status(400).json({
@@ -261,7 +260,7 @@ export async function createExpressApp() {
       const remoteData = await pullAllFromMongo();
       if (remoteData) {
         db = remoteData;
-        saveDatabase(db);
+        saveDatabaseLocalSync(db);
         return res.json({ success: true, message: 'Live data successfully pulled from MongoDB Atlas Cloud!' });
       } else {
         return res.status(404).json({ success: false, error: 'No data documents found in MongoDB Cloud database.' });
@@ -277,7 +276,8 @@ export async function createExpressApp() {
   });
 
   // Get full state (for fast client hydration)
-  app.get('/api/state', (req, res) => {
+  api.get('/state', async (req, res) => {
+    await refreshStateFromMongo(false);
     res.json({
       products: db.products,
       users: db.users.map((u) => {
@@ -294,7 +294,8 @@ export async function createExpressApp() {
   });
 
   // Auth: Login
-  app.post('/api/auth/login', (req, res) => {
+  api.post('/auth/login', async (req, res) => {
+    await refreshStateFromMongo(false);
     const { phone, password } = req.body;
     const user = db.users.find((u) => u.phone === phone?.trim());
 
@@ -329,7 +330,7 @@ export async function createExpressApp() {
   });
 
   // Auth: Register Agent
-  app.post('/api/auth/register', (req, res) => {
+  api.post('/auth/register', async (req, res) => {
     const { name, phone, password, address } = req.body;
     if (!name || !phone || !password) {
       return res.status(400).json({ error: 'Name, phone, and password are required' });
@@ -384,7 +385,7 @@ export async function createExpressApp() {
       timestamp: dt.timestamp,
     });
 
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({
       success: true,
       message: 'Agent registration submitted successfully! Please wait for Admin approval.',
@@ -393,7 +394,7 @@ export async function createExpressApp() {
   });
 
   // Auth: Change password
-  app.post('/api/auth/change-password', (req, res) => {
+  api.post('/auth/change-password', async (req, res) => {
     const { userId, oldPassword, newPassword } = req.body;
     const user = db.users.find((u) => u.id === userId);
     if (!user) {
@@ -409,10 +410,6 @@ export async function createExpressApp() {
     }
 
     user.passwordHash = newPassword.trim();
-    saveDatabase(db);
-    syncToMongo(async () => {
-      await mongoUpsert('users', user.id, user);
-    });
 
     const dt = getBangladeshDateTime();
     db.logs.unshift({
@@ -426,13 +423,13 @@ export async function createExpressApp() {
       time: dt.time,
       timestamp: dt.timestamp,
     });
-    saveDatabase(db);
 
+    await saveDatabase(db);
     res.json({ success: true, message: 'Password updated successfully!' });
   });
 
-  // Users: Update Profile (Address & Email - Name and Phone are strictly immutable)
-  app.put('/api/users/:id/profile', (req, res) => {
+  // Users: Update Profile
+  api.put('/users/:id/profile', async (req, res) => {
     const { id } = req.params;
     const { address, email } = req.body;
     const user = db.users.find((u) => u.id === id);
@@ -440,18 +437,12 @@ export async function createExpressApp() {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Name and phone are strictly IMMUTABLE as requested
     if (address !== undefined) {
       user.address = String(address).trim();
     }
     if (email !== undefined) {
       user.email = String(email).trim();
     }
-
-    saveDatabase(db);
-    syncToMongo(async () => {
-      await mongoUpsert('users', user.id, user);
-    });
 
     const dt = getBangladeshDateTime();
     db.logs.unshift({
@@ -460,55 +451,55 @@ export async function createExpressApp() {
       role: user.role,
       action: 'Profile Updated',
       referenceId: user.id,
-      details: `${user.name} updated profile details (address / email)`,
+      details: `Updated personal profile details`,
       date: dt.date,
       time: dt.time,
       timestamp: dt.timestamp,
     });
-    saveDatabase(db);
 
+    await saveDatabase(db);
     const { passwordHash, ...safeUser } = user;
-    res.json({
-      success: true,
-      message: 'Profile details updated successfully!',
-      user: safeUser,
-    });
+    res.json({ success: true, user: safeUser });
   });
 
-  // Agents: Update status (Approve, Reject, Suspend, Activate)
-  app.put('/api/agents/:id/status', (req, res) => {
+  // Agents: Update Status
+  api.put('/agents/:id/status', async (req, res) => {
     const { id } = req.params;
     const { status, adminName } = req.body;
-    const agentIndex = db.users.findIndex((u) => u.id === id);
-
-    if (agentIndex === -1) {
+    const agent = db.users.find((u) => u.id === id && u.role === 'AGENT');
+    if (!agent) {
       return res.status(404).json({ error: 'Agent not found' });
     }
 
-    const agent = db.users[agentIndex];
+    const validStatuses = ['ACTIVE', 'REJECTED', 'SUSPENDED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
     const dt = getBangladeshDateTime();
 
     if (status === 'REJECTED') {
-      // User directive: Rejecting an agent must completely remove them from the admin panel
-      db.users.splice(agentIndex, 1);
+      const idx = db.users.findIndex((u) => u.id === id);
+      if (idx !== -1) {
+        db.users.splice(idx, 1);
+      }
       db.logs.unshift({
         id: `LOG-${Date.now()}`,
         user: adminName || 'Admin Manager',
         role: 'ADMIN',
-        action: 'Agent Application Rejected',
+        action: 'Agent Registration Rejected & Removed',
         referenceId: id,
         details: `${agent.name} (${agent.phone}) registration was rejected and removed from system`,
         date: dt.date,
         time: dt.time,
         timestamp: dt.timestamp,
       });
-      saveDatabase(db);
+      await saveDatabase(db);
       return res.json({ success: true, message: 'Agent registration rejected and removed from admin portal', removedId: id });
     }
 
     agent.status = status;
 
-    // Log
     db.logs.unshift({
       id: `LOG-${Date.now()}`,
       user: adminName || 'Admin Manager',
@@ -521,12 +512,12 @@ export async function createExpressApp() {
       timestamp: dt.timestamp,
     });
 
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ success: true, agent });
   });
 
   // Agents: Delete / Remove
-  app.delete('/api/agents/:id', (req, res) => {
+  api.delete('/agents/:id', async (req, res) => {
     const { id } = req.params;
     const index = db.users.findIndex((u) => u.id === id);
     if (index === -1) return res.status(404).json({ error: 'Agent not found' });
@@ -547,12 +538,12 @@ export async function createExpressApp() {
       timestamp: dt.timestamp,
     });
 
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ success: true, message: `Agent "${agent.name}" removed successfully`, removedId: id });
   });
 
   // Products: Add
-  app.post('/api/products', (req, res) => {
+  api.post('/products', async (req, res) => {
     const {
       name,
       retailPriceKg,
@@ -617,12 +608,12 @@ export async function createExpressApp() {
       timestamp: dt.timestamp,
     });
 
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ success: true, product: newProd });
   });
 
   // Products: Edit
-  app.put('/api/products/:id', (req, res) => {
+  api.put('/products/:id', async (req, res) => {
     const { id } = req.params;
     const prod = db.products.find((p) => p.id === id);
     if (!prod) return res.status(404).json({ error: 'Product not found' });
@@ -654,12 +645,12 @@ export async function createExpressApp() {
       timestamp: dt.timestamp,
     });
 
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ success: true, product: prod });
   });
 
   // Products: Delete
-  app.delete('/api/products/:id', (req, res) => {
+  api.delete('/products/:id', async (req, res) => {
     const { id } = req.params;
     const index = db.products.findIndex((p) => p.id === id);
     if (index === -1) return res.status(404).json({ error: 'Product not found' });
@@ -680,12 +671,12 @@ export async function createExpressApp() {
       timestamp: dt.timestamp,
     });
 
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ success: true, message: `Product "${prod.name}" deleted successfully`, deletedId: id });
   });
 
   // Sales: Create Sale (Atomic Transaction)
-  app.post('/api/sales', (req, res) => {
+  api.post('/sales', async (req, res) => {
     const { agentId, saleType, items, customerName, customerPhone, customerAddress, discount } = req.body;
     const agent = db.users.find((u) => u.id === agentId && u.role === 'AGENT');
     if (!agent) {
@@ -827,7 +818,7 @@ export async function createExpressApp() {
       timestamp: dt.timestamp,
     });
 
-    saveDatabase(db);
+    await saveDatabase(db);
 
     res.json({
       success: true,
@@ -838,7 +829,7 @@ export async function createExpressApp() {
   });
 
   // Stock: Adjustment / Stock In
-  app.post('/api/stock/change', (req, res) => {
+  api.post('/stock/change', async (req, res) => {
     const { productId, type, quantity, unit, referenceNote, recordedBy } = req.body;
     const prod = db.products.find((p) => p.id === productId);
     if (!prod) return res.status(404).json({ error: 'Product not found' });
@@ -897,12 +888,12 @@ export async function createExpressApp() {
       timestamp: dt.timestamp,
     });
 
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ success: true, transaction: stx, updatedProduct: prod });
   });
 
   // Stock: Delete Transaction
-  app.delete('/api/stock/:id', (req, res) => {
+  api.delete('/stock/:id', async (req, res) => {
     const { id } = req.params;
     const index = db.stockTransactions.findIndex((tx) => tx.id === id);
     if (index === -1) {
@@ -924,12 +915,12 @@ export async function createExpressApp() {
       timestamp: dt.timestamp,
     });
 
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ success: true, message: 'Stock transaction removed successfully', deletedId: id });
   });
 
   // Due Management: Record Payment / Clear Due
-  app.post('/api/payments', (req, res) => {
+  api.post('/payments', async (req, res) => {
     const { agentId, amount, paymentMethod, referenceNote, recordedBy } = req.body;
     const agent = db.users.find((u) => u.id === agentId && u.role === 'AGENT');
     if (!agent) {
@@ -967,7 +958,6 @@ export async function createExpressApp() {
 
     db.payments.unshift(paymentRecord);
 
-    // Notify Agent
     const dueNotificationText = remainingDue < 0
       ? `Admin recorded payment of ৳${numAmount.toLocaleString()}. Your account now has an advance balance of ৳${Math.abs(remainingDue).toLocaleString()} (Due: -৳${Math.abs(remainingDue).toLocaleString()}). Next sales will automatically deduct from this balance.`
       : `Admin recorded payment of ৳${numAmount.toLocaleString()}. Your remaining due is now ৳${remainingDue.toLocaleString()}.`;
@@ -985,7 +975,6 @@ export async function createExpressApp() {
       timestamp: dt.timestamp,
     });
 
-    // Log
     db.logs.unshift({
       id: `LOG-${Date.now()}`,
       user: recordedBy || 'Admin Manager',
@@ -998,7 +987,7 @@ export async function createExpressApp() {
       timestamp: dt.timestamp,
     });
 
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({
       success: true,
       payment: paymentRecord,
@@ -1007,21 +996,21 @@ export async function createExpressApp() {
   });
 
   // Notifications: Mark all read
-  app.put('/api/notifications/read-all', (req, res) => {
+  api.put('/notifications/read-all', async (req, res) => {
     db.notifications.forEach((n) => (n.isRead = true));
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ success: true });
   });
 
   // Settings: Update
-  app.post('/api/settings', (req, res) => {
+  api.post('/settings', async (req, res) => {
     Object.assign(db.settings, req.body);
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ success: true, settings: db.settings });
   });
 
   // Google Sheets Sync Bridge
-  app.post('/api/sync/sheets', async (req, res) => {
+  api.post('/sync/sheets', async (req, res) => {
     const { scriptUrl } = req.body;
     const targetUrl = scriptUrl || db.settings.googleAppsScriptUrl;
 
@@ -1032,7 +1021,6 @@ export async function createExpressApp() {
     }
 
     try {
-      // Forward payload to Google Apps Script Web App
       const response = await fetch(targetUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1058,6 +1046,10 @@ export async function createExpressApp() {
     }
   });
 
+  // Mount API router on BOTH '/api' and '/' to ensure 100% compatibility with Vercel rewrites
+  app.use('/api', api);
+  app.use('/', api);
+
   // Graceful database error handling fallback middleware
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (
@@ -1082,13 +1074,19 @@ export async function startServer() {
   const app = await createExpressApp();
 
   // Vite Middleware in dev or static files in production
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
+  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    try {
+      // Dynamic import prevents vite from being required in production serverless environments
+      const { createServer: createViteServer } = await import('vite');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } catch (e) {
+      console.warn('Vite middleware could not be loaded:', e);
+    }
+  } else if (!process.env.VERCEL) {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
@@ -1104,6 +1102,6 @@ export async function startServer() {
 }
 
 // Only auto-listen if not running as a serverless function
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
   startServer();
 }

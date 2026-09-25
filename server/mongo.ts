@@ -1,7 +1,7 @@
-import { MongoClient, Db, ServerApiVersion } from 'mongodb';
+import { MongoClient, Db } from 'mongodb';
 import fs from 'fs';
 import path from 'path';
-import {
+import type {
   Product,
   User,
   Sale,
@@ -11,7 +11,7 @@ import {
   AdminLog,
   BusinessSettings,
   MongoStatus,
-} from '../src/types';
+} from '../src/types.ts';
 
 interface DatabaseSchema {
   products: Product[];
@@ -51,13 +51,14 @@ export function getWritableDataDir(): string {
 
 const CONFIG_FILE = path.join(getWritableDataDir(), 'mongo_config.json');
 
-// Memory references
-let client: MongoClient | null = null;
-let db: Db | null = null;
+// Global connection state cached across serverless lambda invocations
+let cachedClient: MongoClient | null = null;
+let cachedDb: Db | null = null;
 let isConnected = false;
 let lastError: string | null = null;
 let activeUri: string = process.env.MONGODB_URI || '';
 const DB_NAME = process.env.MONGODB_DB_NAME || 'deshi_bite';
+let inFlightConnectPromise: Promise<{ success: boolean; message: string }> | null = null;
 
 // Load saved URI if exists from writable config or /tmp fallback
 try {
@@ -109,7 +110,7 @@ export function getActiveUri(): string {
 }
 
 export function isMongoActive(): boolean {
-  return isConnected && db !== null;
+  return isConnected && cachedDb !== null;
 }
 
 export async function connectMongo(customUri?: string): Promise<{ success: boolean; message: string }> {
@@ -142,74 +143,112 @@ export async function connectMongo(customUri?: string): Promise<{ success: boole
     return { success: false, message: lastError };
   }
 
-  try {
-    // Close existing client if any
-    if (client) {
+  // If already connected with the same URI, verify connection and return immediately
+  if (isConnected && cachedClient && cachedDb && activeUri === uriToUse) {
+    try {
+      await cachedDb.command({ ping: 1 });
+      return { success: true, message: `Connected to MongoDB database "${cachedDb.databaseName}"` };
+    } catch {
+      // Ping failed, reconnect
+      isConnected = false;
+      cachedClient = null;
+      cachedDb = null;
+    }
+  }
+
+  // If connection is already in progress, await the ongoing promise to avoid duplicate connection pools
+  if (inFlightConnectPromise) {
+    return inFlightConnectPromise;
+  }
+
+  inFlightConnectPromise = (async () => {
+    try {
+      if (cachedClient) {
+        try {
+          await cachedClient.close();
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      console.log(`[MongoDB] Connecting to MongoDB Atlas (${maskMongoUri(uriToUse)})...`);
+
+      // Determine target database name (extract from URI path if present, otherwise default to deshi_bite)
+      let targetDbName = DB_NAME;
       try {
-        await client.close();
+        const pseudoUrl = uriToUse.replace('mongodb+srv://', 'http://').replace('mongodb://', 'http://');
+        const parsed = new URL(pseudoUrl);
+        const extractedDb = parsed.pathname.replace(/^\//, '').split('?')[0].trim();
+        if (extractedDb) {
+          targetDbName = extractedDb;
+        }
+      } catch {
+        // ignore
+      }
+
+      // Optimized timeouts for serverless / cloud deployments
+      const client = new MongoClient(uriToUse, {
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 10000,
+        retryWrites: true,
+        maxPoolSize: 10,
+        minPoolSize: 0,
+      });
+
+      await client.connect();
+      const testDb = client.db(targetDbName);
+      await testDb.command({ ping: 1 });
+
+      cachedClient = client;
+      cachedDb = testDb;
+      isConnected = true;
+      lastError = null;
+      activeUri = uriToUse;
+
+      // Save configuration for local/preview persistence
+      try {
+        const dir = getWritableDataDir();
+        const targetConfig = path.join(dir, 'mongo_config.json');
+        fs.writeFileSync(
+          targetConfig,
+          JSON.stringify({ uri: uriToUse, dbName: targetDbName, updatedAt: new Date().toISOString() }),
+          'utf-8'
+        );
       } catch (e) {
         // ignore
       }
-    }
 
-    console.log(`[MongoDB] Attempting to connect to MongoDB Atlas... (${maskMongoUri(uriToUse)})`);
-
-    // Determine target database name (extract from URI path if present, otherwise default to deshi_bite)
-    let targetDbName = DB_NAME;
-    try {
-      const pseudoUrl = uriToUse.replace('mongodb+srv://', 'http://').replace('mongodb://', 'http://');
-      const parsed = new URL(pseudoUrl);
-      const extractedDb = parsed.pathname.replace(/^\//, '').split('?')[0].trim();
-      if (extractedDb) {
-        targetDbName = extractedDb;
+      console.log(`[MongoDB] Connected successfully to MongoDB Cloud database: "${targetDbName}"`);
+      return { success: true, message: `Connected to MongoDB database "${targetDbName}" successfully!` };
+    } catch (err: any) {
+      isConnected = false;
+      cachedClient = null;
+      cachedDb = null;
+      let errMsg = err.message || 'Failed to connect to MongoDB';
+      if (
+        errMsg.includes('Server selection timed out') ||
+        errMsg.includes('ETIMEDOUT') ||
+        errMsg.includes('ECONNREFUSED')
+      ) {
+        errMsg = `${errMsg}. Ensure that '0.0.0.0/0' (Allow Access From Anywhere) is added to your MongoDB Atlas Network Access IP whitelist.`;
+      } else if (errMsg.includes('Authentication failed') || errMsg.includes('bad auth')) {
+        errMsg = `${errMsg}. Check username and password. Special characters in password must be URL encoded.`;
       }
-    } catch {
-      // ignore
+      lastError = errMsg;
+      console.warn(`[MongoDB] Connection notice: ${lastError}`);
+      return { success: false, message: lastError };
+    } finally {
+      inFlightConnectPromise = null;
     }
-    
-    // Connect with 20-second timeout to allow remote Atlas SSL handshake over cloud networks (e.g. Vercel)
-    client = new MongoClient(uriToUse, {
-      serverSelectionTimeoutMS: 20000,
-      connectTimeoutMS: 20000,
-      retryWrites: true,
-    });
+  })();
 
-    await client.connect();
-    // Ping database
-    await client.db(targetDbName).command({ ping: 1 });
-
-    db = client.db(targetDbName);
-    isConnected = true;
-    lastError = null;
-    activeUri = uriToUse;
-
-    // Save configuration for persistence (try writable directory and /tmp fallback)
-    try {
-      const dir = getWritableDataDir();
-      const targetConfig = path.join(dir, 'mongo_config.json');
-      fs.writeFileSync(targetConfig, JSON.stringify({ uri: uriToUse, dbName: targetDbName, updatedAt: new Date().toISOString() }), 'utf-8');
-    } catch (e) {
-      console.warn('[MongoDB] Notice saving mongo_config.json:', e);
-    }
-
-    console.log(`[MongoDB] Connected successfully to MongoDB Cloud database: "${targetDbName}"`);
-    return { success: true, message: `Connected to MongoDB database "${targetDbName}" successfully!` };
-  } catch (err: any) {
-    isConnected = false;
-    let errMsg = err.message || 'Failed to connect to MongoDB';
-    if (errMsg.includes('Server selection timed out') || errMsg.includes('ETIMEDOUT') || errMsg.includes('ECONNREFUSED')) {
-      errMsg = `${errMsg}. Ensure that '0.0.0.0/0' (Allow Access From Anywhere) is added to your MongoDB Atlas Network Access IP whitelist.`;
-    }
-    lastError = errMsg;
-    console.warn(`[MongoDB] Connection notice: ${lastError}`);
-    return { success: false, message: lastError };
-  }
+  return inFlightConnectPromise;
 }
 
 export async function getMongoStatus(): Promise<MongoStatus> {
   const dt = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Dhaka' });
 
-  if (!isConnected || !db) {
+  if (!isConnected || !cachedDb) {
     return {
       connected: false,
       database: DB_NAME,
@@ -223,18 +262,18 @@ export async function getMongoStatus(): Promise<MongoStatus> {
 
   try {
     const [productsCount, usersCount, salesCount, stockCount, paymentsCount, logsCount, notifsCount] = await Promise.all([
-      db.collection('products').countDocuments(),
-      db.collection('users').countDocuments(),
-      db.collection('sales').countDocuments(),
-      db.collection('stock_transactions').countDocuments(),
-      db.collection('payments').countDocuments(),
-      db.collection('logs').countDocuments(),
-      db.collection('notifications').countDocuments(),
+      cachedDb.collection('products').countDocuments(),
+      cachedDb.collection('users').countDocuments(),
+      cachedDb.collection('sales').countDocuments(),
+      cachedDb.collection('stock_transactions').countDocuments(),
+      cachedDb.collection('payments').countDocuments(),
+      cachedDb.collection('logs').countDocuments(),
+      cachedDb.collection('notifications').countDocuments(),
     ]);
 
     return {
       connected: true,
-      database: DB_NAME,
+      database: cachedDb.databaseName || DB_NAME,
       hasUri: true,
       maskedUri: maskMongoUri(activeUri),
       error: null,
@@ -265,11 +304,13 @@ export async function getMongoStatus(): Promise<MongoStatus> {
 
 // Push all local data into MongoDB (useful on initial connection or manual sync)
 export async function pushAllToMongo(schema: DatabaseSchema): Promise<boolean> {
-  if (!isConnected || !db) return false;
+  if (!isConnected || !cachedDb) return false;
 
   try {
+    const promises: Promise<any>[] = [];
+
     // Products
-    if (schema.products?.length > 0) {
+    if (schema.products && schema.products.length > 0) {
       const ops = schema.products.map((p) => ({
         replaceOne: {
           filter: { id: p.id },
@@ -277,11 +318,11 @@ export async function pushAllToMongo(schema: DatabaseSchema): Promise<boolean> {
           upsert: true,
         },
       }));
-      await db.collection('products').bulkWrite(ops);
+      promises.push(cachedDb.collection('products').bulkWrite(ops));
     }
 
     // Users
-    if (schema.users?.length > 0) {
+    if (schema.users && schema.users.length > 0) {
       const ops = schema.users.map((u) => ({
         replaceOne: {
           filter: { id: u.id },
@@ -289,11 +330,11 @@ export async function pushAllToMongo(schema: DatabaseSchema): Promise<boolean> {
           upsert: true,
         },
       }));
-      await db.collection('users').bulkWrite(ops);
+      promises.push(cachedDb.collection('users').bulkWrite(ops));
     }
 
     // Sales
-    if (schema.sales?.length > 0) {
+    if (schema.sales && schema.sales.length > 0) {
       const ops = schema.sales.map((s) => ({
         replaceOne: {
           filter: { id: s.id },
@@ -301,11 +342,11 @@ export async function pushAllToMongo(schema: DatabaseSchema): Promise<boolean> {
           upsert: true,
         },
       }));
-      await db.collection('sales').bulkWrite(ops);
+      promises.push(cachedDb.collection('sales').bulkWrite(ops));
     }
 
     // Stock Transactions
-    if (schema.stockTransactions?.length > 0) {
+    if (schema.stockTransactions && schema.stockTransactions.length > 0) {
       const ops = schema.stockTransactions.map((st) => ({
         replaceOne: {
           filter: { id: st.id },
@@ -313,11 +354,11 @@ export async function pushAllToMongo(schema: DatabaseSchema): Promise<boolean> {
           upsert: true,
         },
       }));
-      await db.collection('stock_transactions').bulkWrite(ops);
+      promises.push(cachedDb.collection('stock_transactions').bulkWrite(ops));
     }
 
     // Payments
-    if (schema.payments?.length > 0) {
+    if (schema.payments && schema.payments.length > 0) {
       const ops = schema.payments.map((pm) => ({
         replaceOne: {
           filter: { id: pm.id },
@@ -325,11 +366,11 @@ export async function pushAllToMongo(schema: DatabaseSchema): Promise<boolean> {
           upsert: true,
         },
       }));
-      await db.collection('payments').bulkWrite(ops);
+      promises.push(cachedDb.collection('payments').bulkWrite(ops));
     }
 
     // Notifications
-    if (schema.notifications?.length > 0) {
+    if (schema.notifications && schema.notifications.length > 0) {
       const ops = schema.notifications.map((n) => ({
         replaceOne: {
           filter: { id: n.id },
@@ -337,11 +378,11 @@ export async function pushAllToMongo(schema: DatabaseSchema): Promise<boolean> {
           upsert: true,
         },
       }));
-      await db.collection('notifications').bulkWrite(ops);
+      promises.push(cachedDb.collection('notifications').bulkWrite(ops));
     }
 
     // Logs
-    if (schema.logs?.length > 0) {
+    if (schema.logs && schema.logs.length > 0) {
       const ops = schema.logs.map((l) => ({
         replaceOne: {
           filter: { id: l.id },
@@ -349,19 +390,21 @@ export async function pushAllToMongo(schema: DatabaseSchema): Promise<boolean> {
           upsert: true,
         },
       }));
-      await db.collection('logs').bulkWrite(ops);
+      promises.push(cachedDb.collection('logs').bulkWrite(ops));
     }
 
     // Settings
     if (schema.settings) {
-      await db.collection('settings').replaceOne(
-        { _id: 'global_settings' as any },
-        { ...schema.settings, _id: 'global_settings' as any },
-        { upsert: true }
+      promises.push(
+        cachedDb.collection('settings').replaceOne(
+          { _id: 'global_settings' as any },
+          { ...schema.settings, _id: 'global_settings' as any },
+          { upsert: true }
+        )
       );
     }
 
-    console.log('[MongoDB] All collections synced to MongoDB Cloud successfully.');
+    await Promise.all(promises);
     return true;
   } catch (err) {
     console.error('[MongoDB] Error pushing state to MongoDB:', err);
@@ -371,21 +414,21 @@ export async function pushAllToMongo(schema: DatabaseSchema): Promise<boolean> {
 
 // Pull latest state from MongoDB
 export async function pullAllFromMongo(): Promise<DatabaseSchema | null> {
-  if (!isConnected || !db) return null;
+  if (!isConnected || !cachedDb) return null;
 
   try {
     const [products, users, sales, stockTransactions, payments, notifications, logs, settingsDoc] = await Promise.all([
-      db.collection('products').find().toArray(),
-      db.collection('users').find().toArray(),
-      db.collection('sales').find().sort({ timestamp: -1 }).toArray(),
-      db.collection('stock_transactions').find().sort({ timestamp: -1 }).toArray(),
-      db.collection('payments').find().sort({ timestamp: -1 }).toArray(),
-      db.collection('notifications').find().sort({ timestamp: -1 }).toArray(),
-      db.collection('logs').find().sort({ timestamp: -1 }).toArray(),
-      db.collection('settings').findOne({ _id: 'global_settings' as any }),
+      cachedDb.collection('products').find().toArray(),
+      cachedDb.collection('users').find().toArray(),
+      cachedDb.collection('sales').find().sort({ timestamp: -1 }).toArray(),
+      cachedDb.collection('stock_transactions').find().sort({ timestamp: -1 }).toArray(),
+      cachedDb.collection('payments').find().sort({ timestamp: -1 }).toArray(),
+      cachedDb.collection('notifications').find().sort({ timestamp: -1 }).toArray(),
+      cachedDb.collection('logs').find().sort({ timestamp: -1 }).toArray(),
+      cachedDb.collection('settings').findOne({ _id: 'global_settings' as any }),
     ]);
 
-    // If collections are completely empty, return null so caller can seed
+    // If collections are completely empty, return null so caller can seed initial products/admin
     if (products.length === 0 && users.length === 0) {
       return null;
     }
@@ -431,9 +474,9 @@ export async function pullAllFromMongo(): Promise<DatabaseSchema | null> {
 
 // Real-time write operations to MongoDB
 export async function mongoUpsert(collectionName: string, id: string, doc: any): Promise<void> {
-  if (!isConnected || !db) return;
+  if (!isConnected || !cachedDb) return;
   try {
-    await db.collection(collectionName).replaceOne(
+    await cachedDb.collection(collectionName).replaceOne(
       { id },
       { ...doc, _id: id as any },
       { upsert: true }
@@ -443,16 +486,11 @@ export async function mongoUpsert(collectionName: string, id: string, doc: any):
   }
 }
 
-export async function mongoInsert(collectionName: string, doc: any): Promise<void> {
-  if (!isConnected || !db) return;
+export async function mongoDelete(collectionName: string, id: string): Promise<void> {
+  if (!isConnected || !cachedDb) return;
   try {
-    const id = doc.id || `doc_${Date.now()}`;
-    await db.collection(collectionName).replaceOne(
-      { id },
-      { ...doc, _id: id as any },
-      { upsert: true }
-    );
+    await cachedDb.collection(collectionName).deleteOne({ id });
   } catch (err) {
-    console.warn(`[MongoDB] Failed to insert in ${collectionName}:`, err);
+    console.warn(`[MongoDB] Failed to delete document in ${collectionName}:`, err);
   }
 }
