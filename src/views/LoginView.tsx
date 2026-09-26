@@ -129,9 +129,9 @@ export const LoginView: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
 
-            <div className="pt-3 border-t border-slate-100 text-center">
-              <p className="text-[11px] text-slate-500 font-medium">
-                Enter your registered phone number & password to access the portal.
+            <div className="pt-2 border-t border-slate-100 text-center">
+              <p className="text-[11px] text-slate-400 font-medium">
+                Enter your authorized credentials to access DESHI BITE Portal.
               </p>
             </div>
           </form>

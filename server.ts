@@ -67,6 +67,28 @@ function loadDatabase(): DatabaseSchema {
     }
   }
 
+  // Fallback for Vercel Serverless environment where /tmp starts empty
+  if (!loaded) {
+    const candidateFiles = [
+      path.join(process.cwd(), 'data', 'deshi_bite_db.json'),
+      path.resolve(__dirname, 'data', 'deshi_bite_db.json'),
+      path.resolve(__dirname, '..', 'data', 'deshi_bite_db.json'),
+    ];
+    for (const cf of candidateFiles) {
+      if (fs.existsSync(cf)) {
+        try {
+          const content = fs.readFileSync(cf, 'utf-8');
+          loaded = JSON.parse(content);
+          if (loaded && loaded.products && loaded.products.length > 0) {
+            break;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }
+
   if (!loaded) {
     const initialDb: DatabaseSchema = {
       products: INITIAL_PRODUCTS,
@@ -93,6 +115,19 @@ function loadDatabase(): DatabaseSchema {
   if (!loaded.logs) loaded.logs = [];
   if (!loaded.settings) loaded.settings = INITIAL_SETTINGS;
 
+  // Ensure initial admin user always exists so login never fails on any deployment
+  const hasAdmin = loaded.users.some((u) => u.role === 'ADMIN');
+  if (!hasAdmin) {
+    loaded.users.unshift(INITIAL_USERS[0]);
+  }
+
+  // Ensure default demo agent exists
+  const hasAgent = loaded.users.some((u) => u.role === 'AGENT');
+  if (!hasAgent) {
+    loaded.users.push(INITIAL_USERS[1]);
+  }
+
+  saveDatabaseLocalSync(loaded);
   return loaded;
 }
 

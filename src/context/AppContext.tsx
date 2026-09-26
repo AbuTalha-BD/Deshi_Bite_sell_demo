@@ -117,6 +117,8 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const apiFetch = (url: string, init?: RequestInit) => fetch(url, init);
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
@@ -163,7 +165,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const checkMongoStatus = async (): Promise<MongoStatus | null> => {
     try {
-      const res = await fetch('/api/mongodb/status');
+      const res = await apiFetch('/api/mongodb/status');
       if (res.ok) {
         const data = await res.json();
         setMongoStatus(data);
@@ -178,7 +180,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const connectMongo = async (uri: string): Promise<{ success: boolean; message: string }> => {
     setLoading(true);
     try {
-      const res = await fetch('/api/mongodb/connect', {
+      const res = await apiFetch('/api/mongodb/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uri }),
@@ -206,7 +208,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const syncMongo = async (direction: 'push' | 'pull' = 'push'): Promise<{ success: boolean; message: string }> => {
     setLoading(true);
     try {
-      const res = await fetch('/api/mongodb/sync', {
+      const res = await apiFetch('/api/mongodb/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ direction }),
@@ -244,7 +246,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Fetch full state from server on mount
   const refreshData = async () => {
     try {
-      const res = await fetch('/api/state');
+      const res = await apiFetch('/api/state');
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products || INITIAL_PRODUCTS);
@@ -284,7 +286,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const login = async (phone: string, pass: string): Promise<boolean> => {
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: phone.trim(), password: pass.trim() }),
@@ -311,7 +313,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const registerAgent = async (data: { name: string; phone: string; password: string; address?: string }): Promise<boolean> => {
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -355,7 +357,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     setLoading(true);
     try {
-      const res = await fetch('/api/sales', {
+      const res = await apiFetch('/api/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -390,7 +392,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }): Promise<boolean> => {
     setLoading(true);
     try {
-      const res = await fetch('/api/payments', {
+      const res = await apiFetch('/api/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -422,7 +424,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const url = isEdit ? `/api/products/${prodData.id}` : '/api/products';
       const method = isEdit ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(prodData),
@@ -449,7 +451,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const deleteProduct = async (productId: string): Promise<boolean> => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/products/${productId}`, {
+      const res = await apiFetch(`/api/products/${productId}`, {
         method: 'DELETE',
       });
       const data = await res.json();
@@ -473,7 +475,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const deleteAgent = async (agentId: string): Promise<boolean> => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/agents/${agentId}`, {
+      const res = await apiFetch(`/api/agents/${agentId}`, {
         method: 'DELETE',
       });
       const data = await res.json();
@@ -503,7 +505,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }): Promise<boolean> => {
     setLoading(true);
     try {
-      const res = await fetch('/api/stock/change', {
+      const res = await apiFetch('/api/stock/change', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -531,7 +533,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const deleteStockTransaction = async (id: string): Promise<boolean> => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/stock/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/stock/${id}`, { method: 'DELETE' });
       const resData = await res.json();
       if (!res.ok) {
         showToast(resData.error || 'Failed to delete transaction', 'error');
@@ -553,7 +555,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateAgentStatus = async (agentId: string, status: 'ACTIVE' | 'REJECTED' | 'SUSPENDED'): Promise<boolean> => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/agents/${agentId}/status`, {
+      const res = await apiFetch(`/api/agents/${agentId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, adminName: currentUser?.name || 'Admin' }),
@@ -581,7 +583,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const markNotificationsAsRead = async () => {
     try {
-      await fetch('/api/notifications/read-all', { method: 'PUT' });
+      await apiFetch('/api/notifications/read-all', { method: 'PUT' });
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     } catch (e) {
       // client update
@@ -598,7 +600,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     setLoading(true);
     try {
-      const res = await fetch('/api/sync/sheets', {
+      const res = await apiFetch('/api/sync/sheets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scriptUrl: url }),
@@ -621,7 +623,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateSettings = async (newSettings: Partial<BusinessSettings>): Promise<boolean> => {
     try {
-      const res = await fetch('/api/settings', {
+      const res = await apiFetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSettings),
@@ -644,7 +646,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!currentUser) return false;
     setLoading(true);
     try {
-      const res = await fetch(`/api/users/${currentUser.id}/profile`, {
+      const res = await apiFetch(`/api/users/${currentUser.id}/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -674,7 +676,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!currentUser) return false;
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/change-password', {
+      const res = await apiFetch('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
