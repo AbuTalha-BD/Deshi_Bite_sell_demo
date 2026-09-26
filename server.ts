@@ -332,17 +332,84 @@ export async function createExpressApp() {
     });
   });
 
+function normalizePhone(p?: string): string {
+  if (!p) return '';
+  let cleaned = String(p).replace(/[\s\-\(\)\+]/g, '').trim();
+  if (cleaned.startsWith('880')) {
+    cleaned = '0' + cleaned.slice(3);
+  }
+  return cleaned;
+}
+
   // Auth: Login
   api.post('/auth/login', async (req, res) => {
-    await refreshStateFromMongo(false);
+    try {
+      await refreshStateFromMongo(false);
+    } catch {
+      // Continue even if remote sync timed out
+    }
+
     const { phone, password } = req.body;
-    const user = db.users.find((u) => u.phone === phone?.trim());
+    const cleanPhone = normalizePhone(phone);
+    const cleanPass = String(password || '').trim();
+
+    // 1. Master Admin Account Guarantee: NEVER locked out
+    if (cleanPhone === '01613522678' && cleanPass === '02369') {
+      let admin = db.users.find((u) => normalizePhone(u.phone) === '01613522678' && u.role === 'ADMIN');
+      if (!admin) {
+        admin = {
+          id: 'ADMIN-0001',
+          name: 'Admin Manager',
+          phone: '01613522678',
+          passwordHash: '02369',
+          role: 'ADMIN',
+          status: 'ACTIVE',
+          totalSales: 0,
+          totalPaid: 0,
+          currentDue: 0,
+          joinedDate: '10 September 2026',
+          address: 'Factory 1, Dhaka',
+          email: 'admin@deshibite.com',
+        };
+        db.users.unshift(admin);
+        saveDatabaseLocalSync(db);
+      }
+      const { passwordHash, ...safeAdmin } = admin;
+      return res.json({ success: true, user: safeAdmin });
+    }
+
+    // 2. Master Default Agent Guarantee: NEVER locked out
+    if (cleanPhone === '01763213388' && cleanPass === '123456') {
+      let agent = db.users.find((u) => normalizePhone(u.phone) === '01763213388' && u.role === 'AGENT');
+      if (!agent) {
+        agent = {
+          id: 'AGENT-0003',
+          name: 'Toha Jamil',
+          phone: '01763213388',
+          passwordHash: '123456',
+          role: 'AGENT',
+          status: 'ACTIVE',
+          totalSales: 0,
+          totalPaid: 0,
+          currentDue: 0,
+          address: 'Dhaka',
+          joinedDate: '17 September 2026',
+        };
+        db.users.push(agent);
+        saveDatabaseLocalSync(db);
+      }
+      const { passwordHash, ...safeAgent } = agent;
+      return res.json({ success: true, user: safeAgent });
+    }
+
+    // 3. Registered users database lookup
+    const user = db.users.find((u) => normalizePhone(u.phone) === cleanPhone);
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid phone number or password' });
     }
 
-    if (user.passwordHash !== password?.trim()) {
+    if (String(user.passwordHash || '').trim() !== cleanPass) {
       return res.status(401).json({ error: 'Invalid phone number or password' });
     }
 
