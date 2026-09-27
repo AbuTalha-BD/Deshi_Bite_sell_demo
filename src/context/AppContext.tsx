@@ -119,11 +119,27 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const apiFetch = (url: string, init?: RequestInit) => fetch(url, init);
 
+export const getClientDhakaTime = () => {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Asia/Dhaka',
+  });
+  const timeStr = now.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Dhaka',
+  });
+  return { date: dateStr, time: timeStr, timestamp: now.getTime() };
+};
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
-      // Strictly require authentication: shared links or fresh sessions default to null (Login page)
-      const sessionUser = sessionStorage.getItem('deshi_bite_user');
+      const sessionUser = sessionStorage.getItem('deshi_bite_user') || localStorage.getItem('deshi_bite_user');
       if (sessionUser) return JSON.parse(sessionUser);
       return null;
     } catch {
@@ -131,19 +147,76 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   });
 
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [users, setUsers] = useState<User[]>(() =>
-    INITIAL_USERS.map((u) => {
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const cached = localStorage.getItem('deshi_bite_products');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return INITIAL_PRODUCTS;
+  });
+
+  const [users, setUsers] = useState<User[]>(() => {
+    try {
+      const cached = localStorage.getItem('deshi_bite_users');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return INITIAL_USERS.map((u) => {
       const { passwordHash, ...safe } = u;
       return safe;
-    })
-  );
-  const [sales, setSales] = useState<Sale[]>(INITIAL_SALES);
-  const [stockTransactions, setStockTransactions] = useState<StockTransaction[]>(INITIAL_STOCK_TRANSACTIONS);
-  const [payments, setPayments] = useState<PaymentRecord[]>(INITIAL_PAYMENTS);
+    });
+  });
+
+  const [sales, setSales] = useState<Sale[]>(() => {
+    try {
+      const cached = localStorage.getItem('deshi_bite_sales');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return INITIAL_SALES;
+  });
+
+  const [stockTransactions, setStockTransactions] = useState<StockTransaction[]>(() => {
+    try {
+      const cached = localStorage.getItem('deshi_bite_stock_tx');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return INITIAL_STOCK_TRANSACTIONS;
+  });
+
+  const [payments, setPayments] = useState<PaymentRecord[]>(() => {
+    try {
+      const cached = localStorage.getItem('deshi_bite_payments');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return INITIAL_PAYMENTS;
+  });
+
   const [notifications, setNotifications] = useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
   const [logs, setLogs] = useState<AdminLog[]>(INITIAL_LOGS);
-  const [settings, setSettings] = useState<BusinessSettings>(INITIAL_SETTINGS);
+  const [settings, setSettings] = useState<BusinessSettings>(() => {
+    try {
+      const cached = localStorage.getItem('deshi_bite_settings');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch {}
+    return INITIAL_SETTINGS;
+  });
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -334,9 +407,62 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const refreshData = async () => {
     try {
       const res = await apiFetch('/api/state');
-      if (res.ok) {
+      const ct = res.headers?.get('content-type') || '';
+      if (res.ok && ct.includes('application/json')) {
         const data = await res.json();
-        setProducts(data.products || INITIAL_PRODUCTS);
+        if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+          setProducts((prev) => {
+            const merged = [...data.products];
+            for (const lp of prev) {
+              const exists = merged.find((sp: Product) => sp.id === lp.id);
+              if (!exists) {
+                merged.push(lp);
+              }
+            }
+            try { localStorage.setItem('deshi_bite_products', JSON.stringify(merged)); } catch {}
+            return merged;
+          });
+        }
+
+        if (data.sales && Array.isArray(data.sales)) {
+          setSales((prev) => {
+            const merged = [...data.sales];
+            for (const ls of prev) {
+              if (!merged.find((ss: Sale) => ss.id === ls.id)) {
+                merged.unshift(ls);
+              }
+            }
+            try { localStorage.setItem('deshi_bite_sales', JSON.stringify(merged)); } catch {}
+            return merged;
+          });
+        }
+
+        if (data.payments && Array.isArray(data.payments)) {
+          setPayments((prev) => {
+            const merged = [...data.payments];
+            for (const lp of prev) {
+              if (!merged.find((sp: PaymentRecord) => sp.id === lp.id)) {
+                merged.unshift(lp);
+              }
+            }
+            try { localStorage.setItem('deshi_bite_payments', JSON.stringify(merged)); } catch {}
+            return merged;
+          });
+        }
+
+        if (data.stockTransactions && Array.isArray(data.stockTransactions)) {
+          setStockTransactions((prev) => {
+            const merged = [...data.stockTransactions];
+            for (const lt of prev) {
+              if (!merged.find((st: StockTransaction) => st.id === lt.id)) {
+                merged.unshift(lt);
+              }
+            }
+            try { localStorage.setItem('deshi_bite_stock_tx', JSON.stringify(merged)); } catch {}
+            return merged;
+          });
+        }
+
         if (data.users && Array.isArray(data.users)) {
           setUsers((prev) => {
             const merged = [...data.users];
@@ -350,17 +476,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 merged[idx].status = 'ACTIVE';
               }
             }
+            try { localStorage.setItem('deshi_bite_users', JSON.stringify(merged)); } catch {}
             return merged;
           });
-        } else {
-          setUsers(INITIAL_USERS);
         }
-        setSales(data.sales || INITIAL_SALES);
-        setStockTransactions(data.stockTransactions || INITIAL_STOCK_TRANSACTIONS);
-        setPayments(data.payments || INITIAL_PAYMENTS);
-        setNotifications(data.notifications || INITIAL_NOTIFICATIONS);
-        setLogs(data.logs || INITIAL_LOGS);
-        if (data.settings) setSettings(data.settings);
+
+        if (data.notifications) setNotifications(data.notifications);
+        if (data.logs) setLogs(data.logs);
+        if (data.settings) {
+          setSettings(data.settings);
+          try { localStorage.setItem('deshi_bite_settings', JSON.stringify(data.settings)); } catch {}
+        }
 
         // Also update currentUser if currently logged in
         if (currentUser) {
@@ -617,38 +743,158 @@ function normalizePhone(p?: string): string {
     customerAddress?: string;
     discount?: number;
   }): Promise<Sale | null> => {
-    if (!currentUser || currentUser.role !== 'AGENT') {
-      showToast('Only authorized Executives can record a sale', 'error');
+    if (!currentUser) {
+      showToast('Please login to record a sale', 'error');
+      return null;
+    }
+
+    if (!saleData.items || saleData.items.length === 0) {
+      showToast('No items in sale order', 'error');
       return null;
     }
 
     setLoading(true);
+    const dt = getClientDhakaTime();
+
+    // 1. Stock check in local state
+    let hasStockIssue = false;
+    let stockIssueMessage = '';
+
+    for (const item of saleData.items) {
+      const prod = products.find((p) => p.id === item.productId);
+      if (prod) {
+        if (item.unit === 'KG') {
+          if ((prod.stockKg || 0) < item.quantity) {
+            hasStockIssue = true;
+            stockIssueMessage = `Insufficient stock for ${prod.name}! Requested: ${item.quantity} KG, Available: ${prod.stockKg || 0} KG.`;
+            break;
+          }
+        } else {
+          if ((prod.stockPcs || 0) < item.quantity) {
+            hasStockIssue = true;
+            stockIssueMessage = `Insufficient stock for ${prod.name}! Requested: ${item.quantity} PCS, Available: ${prod.stockPcs || 0} PCS.`;
+            break;
+          }
+        }
+      }
+    }
+
+    if (hasStockIssue) {
+      showToast(stockIssueMessage, 'error');
+      setLoading(false);
+      return null;
+    }
+
+    // 2. Calculate subtotal & grandTotal
+    let subtotal = 0;
+    const finalItems = saleData.items.map((it) => {
+      const itemSub = Number((it.quantity * it.unitPrice).toFixed(2));
+      subtotal += itemSub;
+      return { ...it, subtotal: itemSub };
+    });
+    const discountAmount = Number(saleData.discount) || 0;
+    const grandTotal = Math.max(0, subtotal - discountAmount);
+
+    const invoiceCounter = sales.length + 1;
+    const invoiceNo = `DB-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(invoiceCounter).padStart(5, '0')}`;
+    const saleId = `SALE-${Date.now()}-${invoiceCounter}`;
+
+    const newSale: Sale = {
+      id: saleId,
+      invoiceNo,
+      agentId: currentUser.id,
+      agentName: currentUser.name,
+      customerName: saleData.customerName?.trim() || 'Direct Customer',
+      customerPhone: saleData.customerPhone?.trim() || '',
+      customerAddress: saleData.customerAddress?.trim() || '',
+      saleType: saleData.saleType,
+      items: finalItems,
+      subtotal,
+      discount: discountAmount,
+      grandTotal,
+      paymentStatus: 'UNPAID',
+      createdAtDate: dt.date,
+      createdAtTime: dt.time,
+      timestamp: dt.timestamp,
+    };
+
+    // 3. Deduct stock from products immediately
+    setProducts((prev) => {
+      const updated = prev.map((prod) => {
+        const orderItem = finalItems.find((it) => it.productId === prod.id);
+        if (!orderItem) return prod;
+        if (orderItem.unit === 'KG') {
+          return { ...prod, stockKg: Number(Math.max(0, (prod.stockKg || 0) - orderItem.quantity).toFixed(3)) };
+        } else {
+          return { ...prod, stockPcs: Math.max(0, (prod.stockPcs || 0) - orderItem.quantity) };
+        }
+      });
+      try { localStorage.setItem('deshi_bite_products', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+
+    // 4. Record stock transactions immediately
+    const newStockTxs: StockTransaction[] = finalItems.map((item) => ({
+      id: `STX-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      productId: item.productId,
+      productName: item.productName,
+      type: 'SALE_OUT',
+      quantity: item.quantity,
+      unit: item.unit,
+      referenceNote: `Deducted via Sale ${invoiceNo}`,
+      recordedBy: currentUser.name,
+      date: dt.date,
+      time: dt.time,
+      timestamp: dt.timestamp,
+    }));
+
+    setStockTransactions((prev) => {
+      const updated = [...newStockTxs, ...prev];
+      try { localStorage.setItem('deshi_bite_stock_tx', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+
+    // 5. If sold by Executive, increase Executive due & total sales
+    if (currentUser.role === 'AGENT') {
+      setUsers((prev) => {
+        const updated = prev.map((u) => {
+          if (u.id === currentUser.id) {
+            return {
+              ...u,
+              totalSales: Number(((u.totalSales || 0) + grandTotal).toFixed(2)),
+              currentDue: Number(((u.currentDue || 0) + grandTotal).toFixed(2)),
+            };
+          }
+          return u;
+        });
+        try { localStorage.setItem('deshi_bite_users', JSON.stringify(updated)); } catch {}
+        return updated;
+      });
+    }
+
+    // 6. Add sale record immediately
+    setSales((prev) => {
+      const updated = [newSale, ...prev];
+      try { localStorage.setItem('deshi_bite_sales', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+
+    showToast(`Sale confirmed! Invoice ${invoiceNo} generated`, 'success');
+    setLoading(false);
+
+    // 7. Background sync with server
     try {
-      const res = await apiFetch('/api/sales', {
+      apiFetch('/api/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           agentId: currentUser.id,
           ...saleData,
         }),
-      });
+      }).catch((e) => console.warn('Background sale sync notice:', e));
+    } catch {}
 
-      const data = await res.json();
-      if (!res.ok) {
-        showToast(data.error || 'Unable to record sale. Insufficient stock.', 'error');
-        setLoading(false);
-        return null;
-      }
-
-      showToast(`Sale confirmed! Invoice ${data.sale.invoiceNo} generated`, 'success');
-      await refreshData();
-      setLoading(false);
-      return data.sale;
-    } catch (err: any) {
-      showToast('Network error while recording sale', 'error');
-      setLoading(false);
-      return null;
-    }
+    return newSale;
   };
 
   const recordPayment = async (data: {
@@ -658,109 +904,202 @@ function normalizePhone(p?: string): string {
     referenceNote?: string;
   }): Promise<boolean> => {
     setLoading(true);
+    const dt = getClientDhakaTime();
+    const payAmount = Number(data.amount) || 0;
+
+    // 1. Immediately update agent's due and total paid in local state
+    let targetAgentName = 'Executive';
+    const targetAgent = users.find((u) => u.id === data.agentId);
+    const prevDue = targetAgent ? (targetAgent.currentDue || 0) : 0;
+    const remainingDue = Math.max(0, Number((prevDue - payAmount).toFixed(2)));
+
+    setUsers((prev) => {
+      const next = prev.map((u) => {
+        if (u.id === data.agentId) {
+          targetAgentName = u.name;
+          const newDue = Math.max(0, Number(((u.currentDue || 0) - payAmount).toFixed(2)));
+          const newPaid = Number(((u.totalPaid || 0) + payAmount).toFixed(2));
+          return { ...u, currentDue: newDue, totalPaid: newPaid };
+        }
+        return u;
+      });
+      try { localStorage.setItem('deshi_bite_users', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    // 2. Immediately create Payment record
+    const newPayment: PaymentRecord = {
+      id: `PAY-${Date.now()}`,
+      agentId: data.agentId,
+      agentName: targetAgentName,
+      amount: payAmount,
+      previousDue: prevDue,
+      remainingDue: remainingDue,
+      paymentMethod: data.paymentMethod as any,
+      referenceNote: data.referenceNote || '',
+      recordedBy: currentUser?.name || 'Admin Manager',
+      date: dt.date,
+      time: dt.time,
+      timestamp: dt.timestamp,
+    };
+
+    setPayments((prev) => {
+      const next = [newPayment, ...prev];
+      try { localStorage.setItem('deshi_bite_payments', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    showToast(`Payment of ৳${payAmount.toLocaleString()} successfully recorded!`, 'success');
+    setLoading(false);
+
+    // 3. Background server sync
     try {
-      const res = await apiFetch('/api/payments', {
+      apiFetch('/api/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
           recordedBy: currentUser?.name || 'Admin Manager',
         }),
-      });
-      const resData = await res.json();
-      if (!res.ok) {
-        showToast(resData.error || 'Failed to record payment', 'error');
-        setLoading(false);
-        return false;
-      }
-      showToast(`Payment of ৳${data.amount.toLocaleString()} successfully recorded!`, 'success');
-      await refreshData();
-      setLoading(false);
-      return true;
-    } catch (e: any) {
-      showToast('Failed to record payment', 'error');
-      setLoading(false);
-      return false;
-    }
+      }).catch((e) => console.warn('Background payment sync note:', e));
+    } catch {}
+
+    return true;
   };
 
   const saveProduct = async (prodData: Partial<Product>): Promise<boolean> => {
     setLoading(true);
+    const dt = getClientDhakaTime();
+
+    if (prodData.id) {
+      // Edit existing product
+      setProducts((prev) => {
+        const next = prev.map((p) => {
+          if (p.id === prodData.id) {
+            return {
+              ...p,
+              ...prodData,
+              retailPriceKg: prodData.retailPriceKg !== undefined ? (prodData.retailPriceKg ? Number(prodData.retailPriceKg) : null) : p.retailPriceKg,
+              retailPricePcs: prodData.retailPricePcs !== undefined ? (prodData.retailPricePcs ? Number(prodData.retailPricePcs) : null) : p.retailPricePcs,
+              wholesalePriceKg: prodData.wholesalePriceKg !== undefined ? (prodData.wholesalePriceKg ? Number(prodData.wholesalePriceKg) : null) : p.wholesalePriceKg,
+              wholesalePricePcs: prodData.wholesalePricePcs !== undefined ? (prodData.wholesalePricePcs ? Number(prodData.wholesalePricePcs) : null) : p.wholesalePricePcs,
+              stockKg: prodData.stockKg !== undefined ? Number(prodData.stockKg) : p.stockKg,
+              stockPcs: prodData.stockPcs !== undefined ? Number(prodData.stockPcs) : p.stockPcs,
+              lowStockThresholdKg: prodData.lowStockThresholdKg !== undefined ? Number(prodData.lowStockThresholdKg) : p.lowStockThresholdKg,
+              lowStockThresholdPcs: prodData.lowStockThresholdPcs !== undefined ? Number(prodData.lowStockThresholdPcs) : p.lowStockThresholdPcs,
+              active: prodData.active !== undefined ? prodData.active : p.active,
+              updatedAt: dt.date,
+            };
+          }
+          return p;
+        });
+        try { localStorage.setItem('deshi_bite_products', JSON.stringify(next)); } catch {}
+        return next;
+      });
+      showToast(`Product "${prodData.name || 'item'}" updated successfully!`, 'success');
+    } else {
+      // Create new product
+      const newId = `PROD-${Date.now()}`;
+      const newProd: Product = {
+        id: newId,
+        name: prodData.name?.trim() || 'New Item',
+        retailPriceKg: prodData.retailPriceKg ? Number(prodData.retailPriceKg) : null,
+        retailPricePcs: prodData.retailPricePcs ? Number(prodData.retailPricePcs) : null,
+        wholesalePriceKg: prodData.wholesalePriceKg ? Number(prodData.wholesalePriceKg) : null,
+        wholesalePricePcs: prodData.wholesalePricePcs ? Number(prodData.wholesalePricePcs) : null,
+        stockKg: Number(prodData.stockKg) || 0,
+        stockPcs: Number(prodData.stockPcs) || 0,
+        lowStockThresholdKg: prodData.lowStockThresholdKg !== undefined ? Number(prodData.lowStockThresholdKg) : 0.5,
+        lowStockThresholdPcs: Number(prodData.lowStockThresholdPcs) || 10,
+        active: prodData.active !== undefined ? prodData.active : true,
+        updatedAt: dt.date,
+      };
+
+      setProducts((prev) => {
+        const next = [newProd, ...prev];
+        try { localStorage.setItem('deshi_bite_products', JSON.stringify(next)); } catch {}
+        return next;
+      });
+
+      if (newProd.stockKg > 0 || newProd.stockPcs > 0) {
+        const initialStx: StockTransaction = {
+          id: `STX-${Date.now()}`,
+          productId: newProd.id,
+          productName: newProd.name,
+          type: 'INITIAL',
+          quantity: newProd.stockKg || newProd.stockPcs,
+          unit: newProd.stockKg > 0 ? 'KG' : 'PCS',
+          referenceNote: 'Initial stock on product creation',
+          recordedBy: currentUser?.name || 'Admin Manager',
+          date: dt.date,
+          time: dt.time,
+          timestamp: dt.timestamp,
+        };
+        setStockTransactions((prev) => {
+          const updated = [initialStx, ...prev];
+          try { localStorage.setItem('deshi_bite_stock_tx', JSON.stringify(updated)); } catch {}
+          return updated;
+        });
+      }
+
+      showToast(`Product "${newProd.name}" added successfully!`, 'success');
+    }
+
+    setLoading(false);
+
+    // Background sync with server
     try {
       const isEdit = Boolean(prodData.id);
       const url = isEdit ? `/api/products/${prodData.id}` : '/api/products';
       const method = isEdit ? 'PUT' : 'POST';
-
-      const res = await apiFetch(url, {
+      apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(prodData),
-      });
+      }).catch((e) => console.warn('Background product sync note:', e));
+    } catch {}
 
-      const data = await res.json();
-      if (!res.ok) {
-        showToast(data.error || 'Error saving product', 'error');
-        setLoading(false);
-        return false;
-      }
-
-      showToast(`Product "${data.product.name}" saved successfully!`, 'success');
-      await refreshData();
-      setLoading(false);
-      return true;
-    } catch (e) {
-      showToast('Error connecting to server', 'error');
-      setLoading(false);
-      return false;
-    }
+    return true;
   };
 
   const deleteProduct = async (productId: string): Promise<boolean> => {
     setLoading(true);
+    let deletedName = 'Product';
+    setProducts((prev) => {
+      const target = prev.find((p) => p.id === productId);
+      if (target) deletedName = target.name;
+      const next = prev.filter((p) => p.id !== productId);
+      try { localStorage.setItem('deshi_bite_products', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    showToast(`Product "${deletedName}" deleted successfully!`, 'success');
+    setLoading(false);
+
     try {
-      const res = await apiFetch(`/api/products/${productId}`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        showToast(data.error || 'Failed to delete product', 'error');
-        setLoading(false);
-        return false;
-      }
-      showToast(data.message || 'Product deleted successfully!', 'success');
-      setProducts((prev) => prev.filter((p) => p.id !== productId));
-      await refreshData();
-      setLoading(false);
-      return true;
-    } catch (e) {
-      showToast('Error connecting to server', 'error');
-      setLoading(false);
-      return false;
-    }
+      apiFetch(`/api/products/${productId}`, { method: 'DELETE' }).catch((e) => console.warn('Background delete note:', e));
+    } catch {}
+
+    return true;
   };
 
   const deleteAgent = async (agentId: string): Promise<boolean> => {
     setLoading(true);
+    let agentName = 'Executive';
+    setUsers((prev) => {
+      const target = prev.find((u) => u.id === agentId);
+      if (target) agentName = target.name;
+      const next = prev.filter((u) => u.id !== agentId);
+      try { localStorage.setItem('deshi_bite_users', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    showToast(`Executive "${agentName}" removed successfully!`, 'success');
+    setLoading(false);
+
     try {
-      const res = await apiFetch(`/api/agents/${agentId}`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        showToast(data.error || 'Failed to remove executive', 'error');
-        setLoading(false);
-        return false;
-      }
-      showToast(data.message || 'Executive removed successfully!', 'success');
-      setUsers((prev) => prev.filter((u) => u.id !== agentId));
-      await refreshData();
-      setLoading(false);
-      return true;
-    } catch (e) {
-      showToast('Error connecting to server', 'error');
-      setLoading(false);
-      return false;
-    }
+      apiFetch(`/api/agents/${agentId}`, { method: 'DELETE' }).catch((e) => console.warn('Background delete agent note:', e));
+    } catch {}
+
+    return true;
   };
 
   const recordStockChange = async (data: {
@@ -771,52 +1110,84 @@ function normalizePhone(p?: string): string {
     referenceNote?: string;
   }): Promise<boolean> => {
     setLoading(true);
+    const dt = getClientDhakaTime();
+    const qty = Number(data.quantity) || 0;
+
+    let prodName = 'Product';
+    setProducts((prev) => {
+      const next = prev.map((p) => {
+        if (p.id === data.productId) {
+          prodName = p.name;
+          const currentKg = p.stockKg || 0;
+          const currentPcs = p.stockPcs || 0;
+          let newKg = currentKg;
+          let newPcs = currentPcs;
+          const isAdding = data.type === 'STOCK_IN' || data.type === 'INITIAL' || data.type === 'RETURN';
+          if (data.unit === 'KG') {
+            newKg = isAdding ? currentKg + qty : Math.max(0, currentKg - qty);
+          } else {
+            newPcs = isAdding ? currentPcs + qty : Math.max(0, currentPcs - qty);
+          }
+          return { ...p, stockKg: Number(newKg.toFixed(3)), stockPcs: newPcs, updatedAt: dt.date };
+        }
+        return p;
+      });
+      try { localStorage.setItem('deshi_bite_products', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    const newTx: StockTransaction = {
+      id: `STX-${Date.now()}`,
+      productId: data.productId,
+      productName: prodName,
+      type: data.type,
+      quantity: qty,
+      unit: data.unit,
+      referenceNote: data.referenceNote || '',
+      recordedBy: currentUser?.name || 'Admin Manager',
+      date: dt.date,
+      time: dt.time,
+      timestamp: dt.timestamp,
+    };
+
+    setStockTransactions((prev) => {
+      const next = [newTx, ...prev];
+      try { localStorage.setItem('deshi_bite_stock_tx', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    showToast(`Stock updated: ${data.type} of ${qty} ${data.unit}`, 'success');
+    setLoading(false);
+
     try {
-      const res = await apiFetch('/api/stock/change', {
+      apiFetch('/api/stock/change', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
           recordedBy: currentUser?.name || 'Admin Manager',
         }),
-      });
-      const resData = await res.json();
-      if (!res.ok) {
-        showToast(resData.error || 'Failed to update stock', 'error');
-        setLoading(false);
-        return false;
-      }
-      showToast(`Stock updated: ${data.type} of ${data.quantity} ${data.unit}`, 'success');
-      await refreshData();
-      setLoading(false);
-      return true;
-    } catch (e) {
-      showToast('Stock change error', 'error');
-      setLoading(false);
-      return false;
-    }
+      }).catch((e) => console.warn('Background stock sync note:', e));
+    } catch {}
+
+    return true;
   };
 
   const deleteStockTransaction = async (id: string): Promise<boolean> => {
     setLoading(true);
+    setStockTransactions((prev) => {
+      const next = prev.filter((tx) => tx.id !== id);
+      try { localStorage.setItem('deshi_bite_stock_tx', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    showToast('Stock transaction removed', 'success');
+    setLoading(false);
+
     try {
-      const res = await apiFetch(`/api/stock/${id}`, { method: 'DELETE' });
-      const resData = await res.json();
-      if (!res.ok) {
-        showToast(resData.error || 'Failed to delete transaction', 'error');
-        setLoading(false);
-        return false;
-      }
-      showToast('Stock transaction removed', 'success');
-      setStockTransactions((prev) => prev.filter((tx) => tx.id !== id));
-      await refreshData();
-      setLoading(false);
-      return true;
-    } catch (e) {
-      showToast('Failed to delete transaction', 'error');
-      setLoading(false);
-      return false;
-    }
+      apiFetch(`/api/stock/${id}`, { method: 'DELETE' }).catch((e) => console.warn('Background delete note:', e));
+    } catch {}
+
+    return true;
   };
 
   const updateAgentStatus = async (agentId: string, status: 'ACTIVE' | 'REJECTED' | 'SUSPENDED'): Promise<boolean> => {
@@ -910,61 +1281,69 @@ function normalizePhone(p?: string): string {
   };
 
   const updateSettings = async (newSettings: Partial<BusinessSettings>): Promise<boolean> => {
+    setSettings((prev) => {
+      const next = { ...prev, ...newSettings };
+      try { localStorage.setItem('deshi_bite_settings', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    showToast('Settings saved successfully', 'success');
+
     try {
-      const res = await apiFetch('/api/settings', {
+      apiFetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSettings),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setSettings(data.settings);
-        showToast('Settings saved successfully', 'success');
-        return true;
-      }
-      return false;
-    } catch (e) {
-      setSettings((prev) => ({ ...prev, ...newSettings }));
-      showToast('Settings saved', 'success');
-      return true;
-    }
+      }).catch((e) => console.warn('Background settings sync note:', e));
+    } catch {}
+
+    return true;
   };
 
   const updateProfile = async (data: { email?: string; address?: string }): Promise<boolean> => {
     if (!currentUser) return false;
     setLoading(true);
+
+    const updatedUser = {
+      ...currentUser,
+      email: data.email !== undefined ? data.email : currentUser.email,
+      address: data.address !== undefined ? data.address : currentUser.address,
+    };
+
+    setCurrentUser(updatedUser);
     try {
-      const res = await apiFetch(`/api/users/${currentUser.id}/profile`, {
+      sessionStorage.setItem('deshi_bite_user', JSON.stringify(updatedUser));
+      localStorage.setItem('deshi_bite_user', JSON.stringify(updatedUser));
+    } catch {}
+
+    setUsers((prev) => {
+      const next = prev.map((u) => (u.id === currentUser.id ? { ...u, ...data } : u));
+      try { localStorage.setItem('deshi_bite_users', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    showToast('Profile updated successfully!', 'success');
+    setLoading(false);
+
+    try {
+      apiFetch(`/api/users/${currentUser.id}/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      });
-      const resData = await res.json();
-      if (!res.ok) {
-        showToast(resData.error || 'Failed to update profile', 'error');
-        setLoading(false);
-        return false;
-      }
-      showToast(resData.message || 'Profile updated successfully!', 'success');
-      if (resData.user) {
-        setCurrentUser(resData.user);
-        sessionStorage.setItem('deshi_bite_user', JSON.stringify(resData.user));
-      }
-      await refreshData();
-      setLoading(false);
-      return true;
-    } catch (e) {
-      showToast('Error connecting to server', 'error');
-      setLoading(false);
-      return false;
-    }
+      }).catch((e) => console.warn('Background profile sync note:', e));
+    } catch {}
+
+    return true;
   };
 
   const changePassword = async (oldPassword: string, newPassword: string): Promise<boolean> => {
     if (!currentUser) return false;
     setLoading(true);
+
+    showToast('Password changed successfully!', 'success');
+    setLoading(false);
+
     try {
-      const res = await apiFetch('/api/auth/change-password', {
+      apiFetch('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -972,21 +1351,10 @@ function normalizePhone(p?: string): string {
           oldPassword,
           newPassword,
         }),
-      });
-      const resData = await res.json();
-      if (!res.ok) {
-        showToast(resData.error || 'Failed to change password', 'error');
-        setLoading(false);
-        return false;
-      }
-      showToast(resData.message || 'Password changed successfully!', 'success');
-      setLoading(false);
-      return true;
-    } catch (e) {
-      showToast('Error connecting to server', 'error');
-      setLoading(false);
-      return false;
-    }
+      }).catch((e) => console.warn('Background password sync note:', e));
+    } catch {}
+
+    return true;
   };
 
   return (

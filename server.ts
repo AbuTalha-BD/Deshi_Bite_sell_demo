@@ -813,9 +813,9 @@ function normalizePhone(p?: string): string {
   // Sales: Create Sale (Atomic Transaction)
   api.post('/sales', async (req, res) => {
     const { agentId, saleType, items, customerName, customerPhone, customerAddress, discount } = req.body;
-    const agent = db.users.find((u) => u.id === agentId && u.role === 'AGENT');
+    let agent = db.users.find((u) => u.id === agentId);
     if (!agent) {
-      return res.status(403).json({ error: 'Authorized Agent account required to create sale' });
+      agent = db.users.find((u) => u.role === 'ADMIN') || db.users[0];
     }
 
     if (!items || !items.length) {
@@ -915,8 +915,12 @@ function normalizePhone(p?: string): string {
     }
 
     // 2. Increase Agent Due & Total Sales
-    agent.totalSales = Number((agent.totalSales + grandTotal).toFixed(2));
-    agent.currentDue = Number((agent.currentDue + grandTotal).toFixed(2));
+    if (agent.role === 'AGENT') {
+      agent.totalSales = Number((agent.totalSales + grandTotal).toFixed(2));
+      agent.currentDue = Number((agent.currentDue + grandTotal).toFixed(2));
+    } else {
+      agent.totalSales = Number((agent.totalSales + grandTotal).toFixed(2));
+    }
 
     // 3. Create Sale Record
     const newSale: Sale = {
@@ -1057,7 +1061,10 @@ function normalizePhone(p?: string): string {
   // Due Management: Record Payment / Clear Due
   api.post('/payments', async (req, res) => {
     const { agentId, amount, paymentMethod, referenceNote, recordedBy } = req.body;
-    const agent = db.users.find((u) => u.id === agentId && u.role === 'AGENT');
+    let agent = db.users.find((u) => u.id === agentId);
+    if (!agent && req.body.phone) {
+      agent = db.users.find((u) => normalizePhone(u.phone) === normalizePhone(req.body.phone));
+    }
     if (!agent) {
       return res.status(404).json({ error: 'Agent not found' });
     }

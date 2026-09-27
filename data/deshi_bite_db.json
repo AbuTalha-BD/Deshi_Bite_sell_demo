@@ -2,17 +2,17 @@
   "products": [
     {
       "id": "PROD-1001",
-      "name": "Chicken Samosa",
-      "retailPriceKg": 600,
+      "name": "Chicken Samosa Special",
+      "retailPriceKg": 650,
       "retailPricePcs": null,
       "wholesalePriceKg": 580,
       "wholesalePricePcs": null,
-      "stockKg": 2.5,
+      "stockKg": 1.5,
       "stockPcs": 0,
       "lowStockThresholdKg": 0.5,
       "lowStockThresholdPcs": 10,
       "active": true,
-      "updatedAt": "24 September 2026"
+      "updatedAt": "27 September 2026"
     },
     {
       "id": "PROD-1002",
@@ -137,14 +137,14 @@
       "name": "Borfi",
       "retailPriceKg": 600,
       "retailPricePcs": null,
-      "wholesalePriceKg": 580,
+      "wholesalePriceKg": 550,
       "wholesalePricePcs": null,
-      "stockKg": 0,
+      "stockKg": 1,
       "stockPcs": 0,
       "lowStockThresholdKg": 0.5,
-      "lowStockThresholdPcs": 10,
-      "active": false,
-      "updatedAt": "23 September 2026"
+      "lowStockThresholdPcs": 20,
+      "active": true,
+      "updatedAt": "27 September 2026"
     }
   ],
   "users": [
@@ -155,12 +155,12 @@
       "passwordHash": "02369",
       "role": "ADMIN",
       "status": "ACTIVE",
-      "totalSales": 0,
+      "totalSales": 600,
       "totalPaid": 0,
       "currentDue": 0,
       "joinedDate": "10 September 2026",
       "address": "Factory 1, Dhaka",
-      "email": "admin@deshibite.com"
+      "email": "admin@deshibitebd.com"
     },
     {
       "id": "AGENT-0003",
@@ -170,8 +170,8 @@
       "role": "AGENT",
       "status": "ACTIVE",
       "totalSales": 0,
-      "totalPaid": 0,
-      "currentDue": 0,
+      "totalPaid": 500,
+      "currentDue": -500,
       "address": "",
       "joinedDate": "17 September 2026"
     },
@@ -202,16 +202,91 @@
       "address": ""
     }
   ],
-  "sales": [],
-  "stockTransactions": [],
-  "payments": [],
+  "sales": [
+    {
+      "id": "SALE-1790526485595-1",
+      "invoiceNo": "DB-20260927-00001",
+      "agentId": "ADMIN-0001",
+      "agentName": "Admin Manager",
+      "customerName": "Direct Customer",
+      "customerPhone": "",
+      "customerAddress": "",
+      "saleType": "RETAIL",
+      "items": [
+        {
+          "productId": "PROD-1001",
+          "productName": "Chicken Samosa",
+          "unit": "KG",
+          "quantity": 1,
+          "unitPrice": 600,
+          "subtotal": 600
+        }
+      ],
+      "subtotal": 600,
+      "discount": 0,
+      "grandTotal": 600,
+      "paymentStatus": "UNPAID",
+      "createdAtDate": "27 September 2026",
+      "createdAtTime": "10:28 PM",
+      "timestamp": 1790526485572
+    }
+  ],
+  "stockTransactions": [
+    {
+      "id": "STX-1790526485595-500",
+      "productId": "PROD-1001",
+      "productName": "Chicken Samosa",
+      "type": "SALE_OUT",
+      "quantity": 1,
+      "unit": "KG",
+      "referenceNote": "Deducted via Sale DB-20260927-00001",
+      "recordedBy": "Admin Manager",
+      "date": "27 September 2026",
+      "time": "10:28 PM",
+      "createdAtDate": "27 September 2026",
+      "createdAtTime": "10:28 PM",
+      "timestamp": 1790526485572,
+      "stockBefore": 2.5,
+      "stockAfter": 1.5
+    }
+  ],
+  "payments": [
+    {
+      "id": "PAY-20260927-9483",
+      "agentId": "AGENT-0003",
+      "agentName": "Toha Jamil",
+      "amount": 500,
+      "previousDue": 0,
+      "remainingDue": -500,
+      "paymentMethod": "BKASH",
+      "referenceNote": "Test payment",
+      "recordedBy": "Admin Manager",
+      "date": "27 September 2026",
+      "time": "10:29 PM",
+      "createdAtDate": "27 September 2026",
+      "createdAtTime": "10:29 PM",
+      "timestamp": 1790526544289
+    }
+  ],
   "notifications": [
+    {
+      "id": "NOTIF-1790526544289",
+      "title": "Advance Payment Recorded",
+      "message": "Admin recorded payment of ৳500. Your account now has an advance balance of ৳500 (Due: -৳500). Next sales will automatically deduct from this balance.",
+      "type": "SUCCESS",
+      "isRead": true,
+      "date": "27 September 2026",
+      "time": "10:29 PM",
+      "targetRole": "AGENT",
+      "agentId": "AGENT-0003",
+      "timestamp": 1790526544289
+    },
     {
       "id": "NOTIF-1790525734061",
       "title": "New Agent Registration Pending",
       "message": "nahid (01710007808) has applied for an agent account.",
       "type": "INFO",
-      "isRead": false,
+      "isRead": true,
       "date": "27 September 2026",
       "time": "10:15 PM",
       "targetRole": "ADMIN",
@@ -222,7 +297,7 @@
       "title": "Payment Received & Due Updated",
       "message": "Admin recorded payment of ৳4,120. Your remaining due is now ৳0.",
       "type": "SUCCESS",
-      "isRead": false,
+      "isRead": true,
       "date": "23 September 2026",
       "time": "07:39 PM",
       "targetRole": "AGENT",
@@ -276,6 +351,116 @@
     }
   ],
   "logs": [
+    {
+      "id": "LOG-1790526552142",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Profile Updated",
+      "referenceId": "ADMIN-0001",
+      "details": "Updated personal profile details",
+      "date": "27 September 2026",
+      "time": "10:29 PM",
+      "timestamp": 1790526552141
+    },
+    {
+      "id": "LOG-1790526544289",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Payment Recorded",
+      "referenceId": "PAY-20260927-9483",
+      "details": "Received ৳500 from Toha Jamil. Remaining due: -৳500 (Advance)",
+      "date": "27 September 2026",
+      "time": "10:29 PM",
+      "timestamp": 1790526544289
+    },
+    {
+      "id": "LOG-1790526494128",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Product Updated",
+      "referenceId": "PROD-1001",
+      "details": "Updated details/pricing for \"Chicken Samosa Special\"",
+      "date": "27 September 2026",
+      "time": "10:28 PM",
+      "timestamp": 1790526494127
+    },
+    {
+      "id": "LOG-1790526485595",
+      "user": "Admin Manager",
+      "role": "AGENT",
+      "action": "Sale Created",
+      "referenceId": "DB-20260927-00001",
+      "details": "Sold 1 items to Direct Customer for ৳600. Added to Agent Due.",
+      "date": "27 September 2026",
+      "time": "10:28 PM",
+      "timestamp": 1790526485572
+    },
+    {
+      "id": "LOG-1790526396828",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Product Updated",
+      "referenceId": "PROD-1011",
+      "details": "Updated details/pricing for \"Borfi\"",
+      "date": "27 September 2026",
+      "time": "10:26 PM",
+      "timestamp": 1790526396812
+    },
+    {
+      "id": "LOG-1790526389825",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Product Added",
+      "referenceId": "PROD-1011",
+      "details": "Created product \"Borfi\"",
+      "date": "27 September 2026",
+      "time": "10:26 PM",
+      "timestamp": 1790526389825
+    },
+    {
+      "id": "LOG-1790526370127",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Product Deleted",
+      "referenceId": "PROD-1011",
+      "details": "Deleted product \"Borfi\" (PROD-1011)",
+      "date": "27 September 2026",
+      "time": "10:26 PM",
+      "timestamp": 1790526370127
+    },
+    {
+      "id": "LOG-1790526191455",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Profile Updated",
+      "referenceId": "ADMIN-0001",
+      "details": "Updated personal profile details",
+      "date": "27 September 2026",
+      "time": "10:23 PM",
+      "timestamp": 1790526191455
+    },
+    {
+      "id": "LOG-1790526014072",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Product Updated",
+      "referenceId": "PROD-1001",
+      "details": "Updated details/pricing for \"Chicken Samosa\"",
+      "date": "27 September 2026",
+      "time": "10:20 PM",
+      "timestamp": 1790526014072
+    },
+    {
+      "id": "LOG-1790526006678",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Product Updated",
+      "referenceId": "PROD-1001",
+      "details": "Updated details/pricing for \"Chicken Samosa\"",
+      "date": "27 September 2026",
+      "time": "10:20 PM",
+      "timestamp": 1790526006676
+    },
     {
       "id": "LOG-1790525748094",
       "user": "Admin Manager",
@@ -586,7 +771,7 @@
     }
   ],
   "settings": {
-    "businessName": "DESHI BITE",
+    "businessName": "DESHI BITE Enterprise",
     "subtitle": "Sales, Stock, Agent & Business Management System",
     "phone": "01613522678",
     "address": "Block-D, Mirpur-12, Dhaka-1216, Bangladesh",
