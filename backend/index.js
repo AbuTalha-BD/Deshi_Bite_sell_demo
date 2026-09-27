@@ -339,6 +339,59 @@ api.post('/auth/register', (req, res) => {
   res.json({ success: true, message: 'Agent registration submitted successfully! Awaiting Admin approval.' });
 });
 
+// Update Agent Status
+api.put('/agents/:id/status', (req, res) => {
+  const { id } = req.params;
+  const { status, adminName, phone, name, address } = req.body;
+  let agent = localDb.users.find((u) => u.id === id && u.role === 'AGENT');
+
+  if (!agent && phone) {
+    agent = localDb.users.find((u) => normalizePhone(u.phone) === normalizePhone(phone) && u.role === 'AGENT');
+  }
+
+  const validStatuses = ['ACTIVE', 'REJECTED', 'SUSPENDED'];
+  const targetStatus = validStatuses.includes(status) ? status : 'ACTIVE';
+  const dt = getDhakaTime();
+
+  if (targetStatus === 'REJECTED') {
+    if (agent) {
+      localDb.users = localDb.users.filter((u) => u.id !== agent.id);
+    }
+    saveLocalDb();
+    return res.json({ success: true, message: 'Agent registration rejected and removed' });
+  }
+
+  if (!agent) {
+    agent = {
+      id: id || `AGENT-${String(localDb.users.filter((u) => u.role === 'AGENT').length + 1).padStart(4, '0')}`,
+      name: name || 'Executive',
+      phone: phone || '',
+      passwordHash: '123456',
+      role: 'AGENT',
+      status: targetStatus,
+      totalSales: 0,
+      totalPaid: 0,
+      currentDue: 0,
+      address: address || '',
+      joinedDate: dt.date
+    };
+    localDb.users.push(agent);
+  } else {
+    agent.status = targetStatus;
+  }
+
+  saveLocalDb();
+  res.json({ success: true, agent });
+});
+
+// Delete Agent
+api.delete('/agents/:id', (req, res) => {
+  const { id } = req.params;
+  localDb.users = localDb.users.filter((u) => u.id !== id);
+  saveLocalDb();
+  res.json({ success: true, message: 'Agent deleted' });
+});
+
 // Create Sale
 api.post('/sales', (req, res) => {
   const { agentId, saleType, items, customerName, customerPhone, customerAddress, discount } = req.body;

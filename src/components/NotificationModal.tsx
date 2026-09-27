@@ -10,6 +10,7 @@ export const NotificationModal: React.FC = () => {
     markNotificationsAsRead,
     updateAgentStatus,
     currentUser,
+    users,
   } = useApp();
 
   if (!isNotificationModalOpen) return null;
@@ -100,7 +101,14 @@ export const NotificationModal: React.FC = () => {
                       {currentUser?.role === 'ADMIN' && isPendingAgent && (
                         <div className="mt-2.5 flex items-center gap-2">
                           <button
-                            onClick={() => updateAgentStatus('u-agent-2', 'ACTIVE')}
+                            onClick={() => {
+                              const targetAgent = (n as any).agentId 
+                                ? users.find((u) => u.id === (n as any).agentId)
+                                : users.find((u) => u.status === 'PENDING');
+                              if (targetAgent) {
+                                updateAgentStatus(targetAgent.id, 'ACTIVE');
+                              }
+                            }}
                             className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-xs transition-colors cursor-pointer"
                           >
                             Approve Executive Account

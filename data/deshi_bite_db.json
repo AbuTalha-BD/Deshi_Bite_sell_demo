@@ -174,12 +174,49 @@
       "currentDue": 0,
       "address": "",
       "joinedDate": "17 September 2026"
+    },
+    {
+      "id": "AGENT-0002",
+      "name": "nahid",
+      "phone": "01710007808",
+      "passwordHash": "password123",
+      "role": "AGENT",
+      "status": "ACTIVE",
+      "totalSales": 0,
+      "totalPaid": 0,
+      "currentDue": 0,
+      "address": "",
+      "joinedDate": "27 September 2026"
+    },
+    {
+      "id": "AGENT-UNKNOWN",
+      "name": "test_unknown",
+      "phone": "01999999999",
+      "passwordHash": "123456",
+      "role": "AGENT",
+      "status": "ACTIVE",
+      "totalSales": 0,
+      "totalPaid": 0,
+      "currentDue": 0,
+      "joinedDate": "27 September 2026",
+      "address": ""
     }
   ],
   "sales": [],
   "stockTransactions": [],
   "payments": [],
   "notifications": [
+    {
+      "id": "NOTIF-1790525734061",
+      "title": "New Agent Registration Pending",
+      "message": "nahid (01710007808) has applied for an agent account.",
+      "type": "INFO",
+      "isRead": false,
+      "date": "27 September 2026",
+      "time": "10:15 PM",
+      "targetRole": "ADMIN",
+      "timestamp": 1790525734039
+    },
     {
       "id": "NOTIF-1790170760297",
       "title": "Payment Received & Due Updated",
@@ -239,6 +276,39 @@
     }
   ],
   "logs": [
+    {
+      "id": "LOG-1790525748094",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Agent Status Updated to ACTIVE",
+      "referenceId": "AGENT-UNKNOWN",
+      "details": "test_unknown status updated to ACTIVE",
+      "date": "27 September 2026",
+      "time": "10:15 PM",
+      "timestamp": 1790525748094
+    },
+    {
+      "id": "LOG-1790525739226",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Agent Status Updated to ACTIVE",
+      "referenceId": "AGENT-0002",
+      "details": "nahid status updated to ACTIVE",
+      "date": "27 September 2026",
+      "time": "10:15 PM",
+      "timestamp": 1790525739225
+    },
+    {
+      "id": "LOG-1790525734061",
+      "user": "nahid",
+      "role": "AGENT",
+      "action": "Agent Registered (Pending)",
+      "referenceId": "AGENT-0002",
+      "details": "New registration with phone 01710007808",
+      "date": "27 September 2026",
+      "time": "10:15 PM",
+      "timestamp": 1790525734039
+    },
     {
       "id": "LOG-1790255770662",
       "user": "Admin Manager",

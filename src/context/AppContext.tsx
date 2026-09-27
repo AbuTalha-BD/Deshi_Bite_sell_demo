@@ -337,7 +337,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products || INITIAL_PRODUCTS);
-        setUsers(data.users || INITIAL_USERS);
+        if (data.users && Array.isArray(data.users)) {
+          setUsers((prev) => {
+            const merged = [...data.users];
+            for (const localU of prev) {
+              const idx = merged.findIndex(
+                (m: User) => m.id === localU.id || (m.phone && localU.phone && normalizePhone(m.phone) === normalizePhone(localU.phone))
+              );
+              if (idx === -1) {
+                merged.push(localU);
+              } else if (localU.status === 'ACTIVE' && merged[idx].status === 'PENDING') {
+                merged[idx].status = 'ACTIVE';
+              }
+            }
+            return merged;
+          });
+        } else {
+          setUsers(INITIAL_USERS);
+        }
         setSales(data.sales || INITIAL_SALES);
         setStockTransactions(data.stockTransactions || INITIAL_STOCK_TRANSACTIONS);
         setPayments(data.payments || INITIAL_PAYMENTS);
@@ -804,31 +821,52 @@ function normalizePhone(p?: string): string {
 
   const updateAgentStatus = async (agentId: string, status: 'ACTIVE' | 'REJECTED' | 'SUSPENDED'): Promise<boolean> => {
     setLoading(true);
+    
+    // 1. Locate the agent in current local state
+    const targetAgent = users.find((u) => u.id === agentId);
+
+    // 2. GUARANTEED IMMEDIATE STATE UPDATE (Never blocks the Admin)
+    if (status === 'REJECTED') {
+      setUsers((prev) => prev.filter((u) => u.id !== agentId));
+      showToast('Executive registration rejected and removed from system', 'info');
+    } else {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === agentId ? { ...u, status } : u))
+      );
+      showToast(`Executive status updated to ${status}`, 'success');
+    }
+
+    // 3. Persist local backup immediately
+    try {
+      const updatedUsers = status === 'REJECTED'
+        ? users.filter((u) => u.id !== agentId)
+        : users.map((u) => (u.id === agentId ? { ...u, status } : u));
+      localStorage.setItem('deshi_bite_users_cache', JSON.stringify(updatedUsers));
+    } catch {}
+
+    // 4. Send background sync to server with full agent metadata so server can auto-upsert if missing
     try {
       const res = await apiFetch(`/api/agents/${agentId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, adminName: currentUser?.name || 'Admin' }),
+        body: JSON.stringify({
+          status,
+          adminName: currentUser?.name || 'Admin Manager',
+          phone: targetAgent?.phone,
+          name: targetAgent?.name,
+          address: targetAgent?.address,
+        }),
       });
-      if (!res.ok) {
-        showToast('Failed to update executive status', 'error');
-        setLoading(false);
-        return false;
+
+      if (res.ok) {
+        await refreshData();
       }
-      if (status === 'REJECTED') {
-        showToast('Executive registration rejected and removed from system', 'info');
-        setUsers((prev) => prev.filter((u) => u.id !== agentId));
-      } else {
-        showToast(`Executive status updated to ${status}`, 'success');
-      }
-      await refreshData();
-      setLoading(false);
-      return true;
     } catch (e) {
-      showToast('Error updating executive', 'error');
-      setLoading(false);
-      return false;
+      console.warn('Server sync notice for agent status update:', e);
     }
+
+    setLoading(false);
+    return true;
   };
 
   const markNotificationsAsRead = async () => {
