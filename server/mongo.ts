@@ -143,6 +143,11 @@ export async function connectMongo(customUri?: string): Promise<{ success: boole
     return { success: false, message: lastError };
   }
 
+  // Auto-normalize if user pasted URI without mongodb+srv:// or mongodb:// prefix
+  if (!uriToUse.startsWith('mongodb://') && !uriToUse.startsWith('mongodb+srv://')) {
+    uriToUse = `mongodb+srv://${uriToUse}`;
+  }
+
   // If already connected with the same URI, verify connection and return immediately
   if (isConnected && cachedClient && cachedDb && activeUri === uriToUse) {
     try {

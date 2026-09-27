@@ -92,11 +92,17 @@ function getDhakaTime() {
 
 // Mongoose Connection
 let isMongoConnected = false;
-if (MONGODB_URI) {
+let activeMongoUri = MONGODB_URI || '';
+if (activeMongoUri) {
+  let uriToUse = activeMongoUri.trim();
+  if (!uriToUse.startsWith('mongodb://') && !uriToUse.startsWith('mongodb+srv://')) {
+    uriToUse = `mongodb+srv://${uriToUse}`;
+  }
   mongoose
-    .connect(MONGODB_URI, { serverSelectionTimeoutMS: 5000 })
+    .connect(uriToUse, { serverSelectionTimeoutMS: 5000 })
     .then(() => {
       isMongoConnected = true;
+      activeMongoUri = uriToUse;
       console.log('MongoDB (Mongoose) Connected successfully to Atlas!');
     })
     .catch((err) => {
@@ -115,6 +121,67 @@ async function generateToken(payload) {
 
 // Router
 const api = express.Router();
+
+// MongoDB Status
+api.get('/mongodb/status', (req, res) => {
+  const masked = activeMongoUri ? activeMongoUri.replace(/:([^@]+)@/, ':****@') : '';
+  res.json({
+    connected: isMongoConnected,
+    database: 'deshi_bite',
+    hasUri: Boolean(activeMongoUri),
+    maskedUri: masked,
+    error: null,
+    lastChecked: new Date().toLocaleTimeString('en-US'),
+    source: isMongoConnected ? 'mongodb' : 'local'
+  });
+});
+
+// MongoDB Connect
+api.post('/mongodb/connect', async (req, res) => {
+  let { uri } = req.body;
+  if (!uri || !uri.trim()) {
+    return res.status(400).json({ success: false, message: 'URI is required' });
+  }
+  let cleanUri = uri.trim();
+  if (!cleanUri.startsWith('mongodb://') && !cleanUri.startsWith('mongodb+srv://')) {
+    cleanUri = `mongodb+srv://${cleanUri}`;
+  }
+  try {
+    await mongoose.disconnect().catch(() => {});
+    await mongoose.connect(cleanUri, { serverSelectionTimeoutMS: 5000 });
+    isMongoConnected = true;
+    activeMongoUri = cleanUri;
+    const masked = cleanUri.replace(/:([^@]+)@/, ':****@');
+    return res.json({
+      success: true,
+      message: 'Connected to MongoDB Atlas Cloud successfully!',
+      status: {
+        connected: true,
+        database: 'deshi_bite',
+        hasUri: true,
+        maskedUri: masked,
+        error: null,
+        lastChecked: new Date().toLocaleTimeString('en-US'),
+        source: 'mongodb'
+      }
+    });
+  } catch (err) {
+    isMongoConnected = false;
+    return res.json({
+      success: false,
+      message: err.message || 'Failed to connect to MongoDB',
+      status: {
+        connected: false,
+        database: 'deshi_bite',
+        hasUri: true,
+        maskedUri: cleanUri.replace(/:([^@]+)@/, ':****@'),
+        error: err.message,
+        lastChecked: new Date().toLocaleTimeString('en-US'),
+        source: 'local'
+      }
+    });
+  }
+});
 
 // Health
 api.get('/health', (req, res) => {

@@ -1182,8 +1182,8 @@ export async function startServer() {
   // Vite Middleware in dev or static files in production
   if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     try {
-      // Dynamic import prevents vite from being required in production serverless environments
-      const { createServer: createViteServer } = await import('vite');
+      const viteMod = ['v', 'i', 't', 'e'].join('');
+      const { createServer: createViteServer } = await import(/* @vite-ignore */ viteMod);
       const vite = await createViteServer({
         server: { middlewareMode: true },
         appType: 'spa',
