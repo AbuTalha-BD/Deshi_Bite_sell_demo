@@ -187,32 +187,32 @@ export const StatCards: React.FC = () => {
 
         {/* Row 2: Operational Status Metrics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {/* Total Due */}
+          {/* Total Due / Advance Payment */}
           <div className={`bg-white rounded-3xl p-4 sm:p-6 border ${
-            totalDueAcrossAgents < 0 ? 'border-emerald-100 shadow-[0_4px_20px_-4px_rgba(16,185,129,0.08)]' : 'border-rose-100 shadow-[0_4px_20px_-4px_rgba(244,63,94,0.08)]'
+            totalDueAcrossAgents < 0 ? 'border-emerald-200 shadow-[0_4px_20px_-4px_rgba(16,185,129,0.12)]' : 'border-rose-100 shadow-[0_4px_20px_-4px_rgba(244,63,94,0.08)]'
           } hover:shadow-md transition-all duration-200`}>
             <div className="flex items-center justify-between mb-2">
               <span className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider ${
                 totalDueAcrossAgents < 0 ? 'text-emerald-700' : 'text-rose-600'
               }`}>
-                {totalDueAcrossAgents < 0 ? 'TOTAL ADVANCE' : 'TOTAL DUE'}
+                {totalDueAcrossAgents < 0 ? 'ADVANCE PAYMENT' : 'TOTAL DUE'}
               </span>
               <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-                totalDueAcrossAgents < 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+                totalDueAcrossAgents < 0 ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600'
               }`}>
                 <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
             <div className={`text-2xl sm:text-3xl lg:text-[32px] font-black tracking-tight flex items-baseline gap-1 my-1 ${
-              totalDueAcrossAgents < 0 ? 'text-emerald-600' : 'text-rose-600'
+              totalDueAcrossAgents < 0 ? 'text-emerald-700' : 'text-rose-600'
             }`}>
-              <span className="font-extrabold select-none">
-                {totalDueAcrossAgents < 0 ? '-৳' : '৳'}
-              </span>
+              <span className="font-extrabold select-none">৳</span>
               <span>{Math.abs(totalDueAcrossAgents).toLocaleString()}</span>
             </div>
             <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">
-              {totalDueAcrossAgents < 0 ? 'Advance balance with Admin' : 'Executive outstanding payable'}
+              {totalDueAcrossAgents < 0
+                ? `Advance payment ৳${Math.abs(totalDueAcrossAgents).toLocaleString()} with Admin`
+                : 'Executive outstanding payable'}
             </p>
           </div>
 
@@ -343,32 +343,32 @@ export const StatCards: React.FC = () => {
         <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">{fullMonthName}</p>
       </div>
 
-      {/* Current Due */}
+      {/* Current Due / Advance Payment */}
       <div className={`bg-white rounded-3xl p-4 sm:p-6 border ${
-        agentPersonalDue < 0 ? 'border-emerald-100 shadow-[0_4px_20px_-4px_rgba(16,185,129,0.08)]' : 'border-rose-100 shadow-[0_4px_20px_-4px_rgba(244,63,94,0.08)]'
+        agentPersonalDue < 0 ? 'border-emerald-200 shadow-[0_4px_20px_-4px_rgba(16,185,129,0.12)]' : 'border-rose-100 shadow-[0_4px_20px_-4px_rgba(244,63,94,0.08)]'
       } hover:shadow-md transition-all duration-200`}>
         <div className="flex items-center justify-between mb-2">
           <span className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider ${
             agentPersonalDue < 0 ? 'text-emerald-700' : 'text-rose-600'
           }`}>
-            {agentPersonalDue < 0 ? 'ADVANCE BALANCE' : 'CURRENT DUE'}
+            {agentPersonalDue < 0 ? 'ADVANCE PAYMENT' : 'CURRENT DUE'}
           </span>
           <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-            agentPersonalDue < 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+            agentPersonalDue < 0 ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600'
           }`}>
             <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
         <div className={`text-2xl sm:text-3xl lg:text-[32px] font-black tracking-tight flex items-baseline gap-1 my-1 ${
-          agentPersonalDue < 0 ? 'text-emerald-600' : 'text-rose-600'
+          agentPersonalDue < 0 ? 'text-emerald-700' : 'text-rose-600'
         }`}>
-          <span className="font-extrabold select-none">
-            {agentPersonalDue < 0 ? '-৳' : '৳'}
-          </span>
+          <span className="font-extrabold select-none">৳</span>
           <span>{Math.abs(agentPersonalDue).toLocaleString()}</span>
         </div>
         <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight">
-          {agentPersonalDue < 0 ? 'Advance deposited to Admin' : 'Payable to Admin'}
+          {agentPersonalDue < 0
+            ? `Advance payment ৳${Math.abs(agentPersonalDue).toLocaleString()} deposited`
+            : 'Payable to Admin'}
         </p>
       </div>
     </div>

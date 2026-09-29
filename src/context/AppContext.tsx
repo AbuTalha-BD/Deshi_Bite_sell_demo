@@ -746,7 +746,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       const currentDue = agent.currentDue || 0;
       const payAmount = Number(data.amount) || 0;
-      const remainingDue = Math.max(0, currentDue - payAmount);
+      const remainingDue = Number((currentDue - payAmount).toFixed(2));
 
       const newPay: PaymentRecord = {
         id: `PAY-${Date.now()}`,
@@ -777,7 +777,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const updated = prev.map((u) => {
           if (u.id === agent.id) {
             const newTotalPaid = Number(((u.totalPaid || 0) + newPay.amount).toFixed(2));
-            const newCurrentDue = Number(Math.max(0, (u.currentDue || 0) - newPay.amount).toFixed(2));
+            const newCurrentDue = Number((currentDue - newPay.amount).toFixed(2));
             const updatedAgent = { ...u, totalPaid: newTotalPaid, currentDue: newCurrentDue };
             if (currentUser?.id === u.id) {
               setCurrentUser(updatedAgent);

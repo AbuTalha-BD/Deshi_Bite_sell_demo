@@ -64,25 +64,25 @@ export const DueView: React.FC = () => {
           const dueVal = isAdmin ? totalSystemDue : (currentUser?.currentDue || 0);
           const isAdvance = dueVal < 0;
           return (
-            <div className="app-card p-5 rounded-2xl">
+            <div className={`app-card p-5 rounded-2xl ${isAdvance ? 'border-emerald-200 bg-emerald-50/20' : ''}`}>
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-[11px] font-bold uppercase tracking-wider ${isAdvance ? 'text-emerald-700' : 'text-rose-600'}`}>
                   {isAdmin
-                    ? isAdvance ? 'Total Advance Balance' : 'Total Outstanding Due'
-                    : isAdvance ? 'My Advance Balance' : 'My Current Due Balance'}
+                    ? isAdvance ? 'Advance Payment' : 'Total Outstanding Due'
+                    : isAdvance ? 'Advance Payment' : 'My Current Due Balance'}
                 </span>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isAdvance ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isAdvance ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
                   <DollarSign className="w-4 h-4" />
                 </div>
               </div>
-              <div className={`text-2xl sm:text-3xl font-black flex items-baseline gap-0.5 ${isAdvance ? 'text-emerald-600' : 'text-rose-600'}`}>
-                <span className="font-black select-none">{isAdvance ? '-৳' : '৳'}</span>
+              <div className={`text-2xl sm:text-3xl font-black flex items-baseline gap-0.5 ${isAdvance ? 'text-emerald-700' : 'text-rose-600'}`}>
+                <span className="font-black select-none">৳</span>
                 <span>{Math.abs(dueVal).toLocaleString()}</span>
               </div>
               <p className="text-[11px] text-slate-600 mt-1">
                 {isAdmin
-                  ? isAdvance ? `Advance credited from executives` : `Payable across ${agentUsers.length} sales executives`
-                  : isAdvance ? 'Advance credit deposited to Admin (offsets next sales)' : 'Payable to Admin for sold inventory'}
+                  ? isAdvance ? `Advance payment ৳${Math.abs(dueVal).toLocaleString()} credited from executives` : `Payable across ${agentUsers.length} sales executives`
+                  : isAdvance ? `Advance payment ৳${Math.abs(dueVal).toLocaleString()} deposited (offsets upcoming sales)` : 'Payable to Admin for sold inventory'}
               </p>
             </div>
           );
