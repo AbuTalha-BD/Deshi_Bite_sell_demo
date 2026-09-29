@@ -42,6 +42,14 @@ export const Banner: React.FC = () => {
           {isAdmin ? (
             <>
               <button
+                onClick={() => setIsSellModalOpen(true)}
+                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-white text-purple-900 hover:bg-purple-50 font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-102 active:scale-98 cursor-pointer"
+              >
+                <ShoppingBag className="w-4 h-4 text-purple-700 shrink-0" />
+                <span>Sell Product</span>
+              </button>
+
+              <button
                 onClick={() => setIsProductModalOpen(true)}
                 className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-purple-900/60 hover:bg-purple-900 text-white font-semibold text-xs sm:text-sm backdrop-blur-md border border-purple-400/40 shadow-xs transition-all hover:scale-102 active:scale-98 cursor-pointer"
               >

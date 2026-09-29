@@ -2,9 +2,6 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 import {
   INITIAL_PRODUCTS,
   INITIAL_USERS,
@@ -14,30 +11,34 @@ import {
   INITIAL_NOTIFICATIONS,
   INITIAL_LOGS,
   INITIAL_SETTINGS,
-} from './src/data/seedData.ts';
-import type {
-  Product,
-  User,
-  Sale,
-  StockTransaction,
-  PaymentRecord,
-  AppNotification,
-  AdminLog,
-  BusinessSettings,
-} from './src/types.ts';
+} from './src/data/seedData';
+import { Product, User, Sale, StockTransaction, PaymentRecord, AppNotification, AdminLog, BusinessSettings } from './src/types';
 import {
   connectMongo,
   getMongoStatus,
   pushAllToMongo,
   pullAllFromMongo,
+  mongoUpsert,
+  mongoInsert,
+  getMongoUserByPhone,
   isMongoActive,
   getWritableDataDir,
-  getActiveUri,
-} from './server/mongo.ts';
+} from './server/mongo';
+
+const currentFileUrl = typeof import.meta !== 'undefined' && import.meta.url ? import.meta.url : '';
+const currentFilename = currentFileUrl ? fileURLToPath(currentFileUrl) : (typeof __filename !== 'undefined' ? __filename : '');
+const currentDirname = typeof __dirname !== 'undefined' ? __dirname : (currentFilename ? path.dirname(currentFilename) : process.cwd());
 
 const PORT = 3000;
 const DB_DIR = getWritableDataDir();
 const DB_FILE = path.join(DB_DIR, 'deshi_bite_db.json');
+
+// Helper to asynchronously sync mutations to MongoDB Cloud
+function syncToMongo(task: () => Promise<void>) {
+  if (isMongoActive()) {
+    task().catch((err) => console.warn('[MongoDB Sync Notice]:', err?.message || err));
+  }
+}
 
 interface DatabaseSchema {
   products: Product[];
@@ -52,43 +53,29 @@ interface DatabaseSchema {
 
 // Ensure data directory exists
 if (!fs.existsSync(DB_DIR)) {
-  try {
-    fs.mkdirSync(DB_DIR, { recursive: true });
-  } catch {
-    // ignore
-  }
+  fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
 // Load or initialize DB
 function loadDatabase(): DatabaseSchema {
   let loaded: DatabaseSchema | null = null;
-  if (fs.existsSync(DB_FILE)) {
-    try {
-      const content = fs.readFileSync(DB_FILE, 'utf-8');
-      loaded = JSON.parse(content);
-    } catch (e) {
-      console.error('Error reading db file, restoring defaults:', e);
-    }
-  }
+  const candidateFiles = [
+    DB_FILE,
+    path.join(process.cwd(), 'data', 'deshi_bite_db.json'),
+    path.join(currentDirname, 'data', 'deshi_bite_db.json'),
+  ];
 
-  // Fallback for Vercel Serverless environment where /tmp starts empty
-  if (!loaded) {
-    const candidateFiles = [
-      path.join(process.cwd(), 'data', 'deshi_bite_db.json'),
-      path.resolve(__dirname, 'data', 'deshi_bite_db.json'),
-      path.resolve(__dirname, '..', 'data', 'deshi_bite_db.json'),
-    ];
-    for (const cf of candidateFiles) {
-      if (fs.existsSync(cf)) {
-        try {
-          const content = fs.readFileSync(cf, 'utf-8');
-          loaded = JSON.parse(content);
-          if (loaded && loaded.products && loaded.products.length > 0) {
-            break;
-          }
-        } catch {
-          // ignore
+  for (const cf of candidateFiles) {
+    if (fs.existsSync(cf)) {
+      try {
+        const content = fs.readFileSync(cf, 'utf-8');
+        const parsed = JSON.parse(content);
+        if (parsed && Array.isArray(parsed.products) && parsed.products.length > 0) {
+          loaded = parsed;
+          break;
         }
+      } catch (e) {
+        console.error('Error reading db file candidate:', cf, e);
       }
     }
   }
@@ -105,61 +92,95 @@ function loadDatabase(): DatabaseSchema {
       settings: INITIAL_SETTINGS,
     };
 
-    saveDatabaseLocalSync(initialDb);
+    saveDatabase(initialDb);
     return initialDb;
   }
 
-  // Ensure default structures are always present
-  if (!loaded.products) loaded.products = INITIAL_PRODUCTS;
-  if (!loaded.users) loaded.users = INITIAL_USERS;
-  if (!loaded.sales) loaded.sales = [];
-  if (!loaded.stockTransactions) loaded.stockTransactions = [];
-  if (!loaded.payments) loaded.payments = [];
-  if (!loaded.notifications) loaded.notifications = [];
-  if (!loaded.logs) loaded.logs = [];
-  if (!loaded.settings) loaded.settings = INITIAL_SETTINGS;
-
-  // Ensure initial admin user always exists so login never fails on any deployment
-  const hasAdmin = loaded.users.some((u) => u.role === 'ADMIN');
-  if (!hasAdmin) {
-    loaded.users.unshift(INITIAL_USERS[0]);
+  // Purge any rejected agents and the other 2 agents (Rahim Ahmed, Karim Mollah)
+  if (loaded.users) {
+    loaded.users = loaded.users.filter(
+      (u) => u.status !== 'REJECTED' && u.name !== 'Rahim Ahmed' && u.name !== 'Karim Mollah'
+    );
+    // Ensure Toha Jamil has zero sales and zero due
+    loaded.users.forEach((u) => {
+      if (u.name === 'Toha Jamil') {
+        u.totalSales = 0;
+        u.totalPaid = 0;
+        u.currentDue = 0;
+        u.status = 'ACTIVE';
+      }
+    });
   }
 
-  // Ensure default demo agent exists
-  const hasAgent = loaded.users.some((u) => u.role === 'AGENT');
-  if (!hasAgent) {
-    loaded.users.push(INITIAL_USERS[1]);
+  // Clear sales and payments so total sell is zero and total due is zero
+  loaded.sales = [];
+  loaded.payments = [];
+
+  // Clean stock transactions from sales and clear pre-existing seed stock in records
+  if (loaded.stockTransactions) {
+    loaded.stockTransactions = loaded.stockTransactions.filter(
+      (tx) => tx.type !== 'SALE' && tx.type !== 'SALE_OUT' && !tx.id.startsWith('STX-20260914') && !tx.id.startsWith('STX-20260915')
+    );
   }
 
-  saveDatabaseLocalSync(loaded);
+  // Clean any pending registration notifications
+  if (loaded.notifications) {
+    loaded.notifications = loaded.notifications.filter(
+      (n) => !n.title.includes('Registration Pending')
+    );
+  }
+
+  // Ensure default low stock alert for KG is 0.5 instead of 5
+  if (loaded.products) {
+    loaded.products.forEach((p) => {
+      if (p.lowStockThresholdKg === 5) {
+        p.lowStockThresholdKg = 0.5;
+      }
+    });
+  }
+
+  if (loaded.settings && (loaded.settings.lowStockDefaultKg === 5 || !loaded.settings.lowStockDefaultKg)) {
+    loaded.settings.lowStockDefaultKg = 0.5;
+  }
+
+  // Ensure payment dates are populated
+  if (loaded.payments) {
+    loaded.payments.forEach((p) => {
+      if (!p.createdAtDate && p.date) p.createdAtDate = p.date;
+      if (!p.createdAtTime && p.time) p.createdAtTime = p.time;
+      if (!p.date && p.createdAtDate) p.date = p.createdAtDate;
+      if (!p.time && p.createdAtTime) p.time = p.createdAtTime;
+    });
+  }
+
+  // Ensure stock transaction dates are populated
+  if (loaded.stockTransactions) {
+    loaded.stockTransactions.forEach((tx) => {
+      if (!tx.createdAtDate && tx.date) tx.createdAtDate = tx.date;
+      if (!tx.createdAtTime && tx.time) tx.createdAtTime = tx.time;
+      if (!tx.date && tx.createdAtDate) tx.date = tx.createdAtDate;
+      if (!tx.time && tx.createdAtTime) tx.time = tx.createdAtTime;
+    });
+  }
+
+  saveDatabase(loaded);
   return loaded;
 }
 
-// Synchronous local file writer
-function saveDatabaseLocalSync(newDb: DatabaseSchema) {
+function saveDatabase(newDb: DatabaseSchema) {
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(newDb, null, 2), 'utf-8');
   } catch (err) {
-    // Expected on read-only environments like Vercel Lambda
+    console.error('Failed to write db file:', err);
   }
-}
 
-// Full persistence function: writes locally and awaits MongoDB Cloud sync
-async function saveDatabase(newDb: DatabaseSchema): Promise<void> {
-  saveDatabaseLocalSync(newDb);
-
-  // If MongoDB is connected, push changes and AWAIT so serverless lambda does not freeze prematurely
-  if (isMongoActive()) {
-    try {
-      await pushAllToMongo(newDb);
-    } catch (err: any) {
-      console.error('[MongoDB] Error saving state to MongoDB Cloud:', err?.message || err);
-    }
-  }
+  // Asynchronously synchronize all records to MongoDB Cloud Atlas
+  syncToMongo(async () => {
+    await pushAllToMongo(newDb);
+  });
 }
 
 let db = loadDatabase();
-let lastMongoSyncTime = 0;
 
 // Bangladesh Time helper
 function getBangladeshDateTime() {
@@ -181,112 +202,133 @@ function getBangladeshDateTime() {
   return { date: dateStr, time: timeStr, timestamp: now.getTime() };
 }
 
-// Refresh state from MongoDB if connected
-async function refreshStateFromMongo(force = false) {
-  if (!isMongoActive()) {
-    if (process.env.MONGODB_URI || getActiveUri()) {
-      await connectMongo();
-    }
-  }
-
-  if (isMongoActive()) {
-    const now = Date.now();
-    // Cache for 2 seconds unless forced to avoid spamming read operations
-    if (force || now - lastMongoSyncTime > 2000) {
-      try {
-        const remoteData = await pullAllFromMongo();
-        if (remoteData && remoteData.products && remoteData.products.length > 0) {
-          db = remoteData;
-          saveDatabaseLocalSync(db);
-          lastMongoSyncTime = now;
-        } else if (!remoteData) {
-          // Empty remote DB: automatically seed initial products and admin
-          await pushAllToMongo(db);
-          lastMongoSyncTime = now;
-        }
-      } catch (err) {
-        console.warn('[MongoDB] Sync refresh notice:', err);
-      }
-    }
-  }
-}
-
 export async function createExpressApp() {
   const app = express();
-  app.use(express.json());
 
-  // Universal CORS & Preflight handling
+  // Support both pre-parsed bodies (Vercel serverless environment) and raw stream bodies (local Vite/Node)
+  app.use((req, res, next) => {
+    // If body is already parsed by Vercel or upstream serverless helper
+    if (req.body && typeof req.body === 'object') {
+      return next();
+    }
+    if (typeof req.body === 'string') {
+      try {
+        req.body = JSON.parse(req.body);
+        return next();
+      } catch {
+        // ignore
+      }
+    }
+    // If request stream was already consumed or ended, don't let body-parser crash with "stream is not readable"
+    if ((req as any)._readableState?.ended || req.readableEnded) {
+      req.body = req.body || {};
+      return next();
+    }
+    express.json()(req, res, (err) => {
+      if (err) {
+        // Fallback to empty body rather than crashing request
+        req.body = req.body || {};
+      }
+      next();
+    });
+  });
+
+  // CORS and Vercel route normalization middleware
   app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     if (req.method === 'OPTIONS') {
-      return res.sendStatus(200);
+      return res.status(200).end();
     }
+
+    // Restore URL path if rewritten by Vercel serverless function (e.g. /api/(.*) -> /api)
+    const xMatchedPath = (req.headers['x-matched-path'] as string) || '';
+    const originalUrl = (req.headers['x-original-url'] as string) || (req.headers['x-forwarded-uri'] as string) || '';
+    let query0 = (req as any).query?.['0'] || (req as any).query?.path;
+
+    if (!query0 && req.url) {
+      try {
+        const u = new URL(req.url, 'http://localhost');
+        query0 = u.searchParams.get('0');
+      } catch {
+        // ignore
+      }
+    }
+
+    if (xMatchedPath && xMatchedPath.startsWith('/api')) {
+      req.url = xMatchedPath;
+    } else if (originalUrl && originalUrl.startsWith('/api')) {
+      req.url = originalUrl;
+    } else if (query0) {
+      const clean = Array.isArray(query0) ? query0.join('/') : String(query0);
+      req.url = `/api/${clean.replace(/^\//, '')}`;
+    }
+
     next();
   });
 
-  // Attempt initial MongoDB connection
-  try {
-    const mongoRes = await connectMongo();
+  // Connect to MongoDB Atlas Cloud asynchronously without blocking route readiness
+  connectMongo().then(async (mongoRes) => {
     if (mongoRes.success) {
-      await refreshStateFromMongo(true);
-      console.log(`[MongoDB] Initialized with MongoDB database (${db.products.length} products, ${db.sales.length} sales)`);
+      const remoteData = await pullAllFromMongo();
+      if (remoteData && remoteData.products.length > 0) {
+        db = remoteData;
+        saveDatabase(db);
+        console.log(`[MongoDB] Synced state from Cloud MongoDB (${db.products.length} products, ${db.sales.length} sales)`);
+      } else {
+        await pushAllToMongo(db);
+        console.log('[MongoDB] Pushed initial dataset to MongoDB Atlas Cloud');
+      }
     } else {
       console.log(`[MongoDB] Startup status: ${mongoRes.message}`);
     }
-  } catch (err: any) {
-    console.warn('[MongoDB] Initial connection notice:', err?.message || err);
-  }
-
-  const api = express.Router();
-
-  // Middleware: ensure MongoDB is connected and synced on API calls
-  api.use(async (req, res, next) => {
-    try {
-      if (req.method === 'GET' || req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
-        await refreshStateFromMongo(false);
-      }
-    } catch {
-      // Continue with in-memory state if network times out
-    }
-    next();
+  }).catch((err: any) => {
+    console.warn('[MongoDB] Startup connection notice:', err?.message || err);
   });
 
+  const apiRouter = express.Router();
+
+  // API ROUTES
   // Health
-  api.get('/health', (req, res) => {
+  apiRouter.get('/health', (req, res) => {
     res.json({
       status: 'ok',
       service: 'DESHI BITE Enterprise Server',
       timezone: 'Asia/Dhaka',
       time: getBangladeshDateTime(),
       mongodbConnected: isMongoActive(),
-      platform: process.env.VERCEL ? 'vercel-serverless' : 'node',
     });
   });
 
   // MongoDB Atlas: Status endpoint
-  api.get('/mongodb/status', async (req, res) => {
+  apiRouter.get('/mongodb/status', async (req, res) => {
     const status = await getMongoStatus();
     res.json(status);
   });
 
   // MongoDB Atlas: Connect or update URI
-  api.post('/mongodb/connect', async (req, res) => {
+  apiRouter.post('/mongodb/connect', async (req, res) => {
     const { uri } = req.body;
     if (!uri?.trim()) {
       return res.status(400).json({ success: false, message: 'MongoDB connection string (URI) is required' });
     }
     const result = await connectMongo(uri.trim());
     if (result.success) {
-      await refreshStateFromMongo(true);
+      const remoteData = await pullAllFromMongo();
+      if (remoteData && remoteData.products.length > 0) {
+        db = remoteData;
+        saveDatabase(db);
+      } else {
+        await pushAllToMongo(db);
+      }
     }
     const status = await getMongoStatus();
     res.json({ ...result, status });
   });
 
   // MongoDB Atlas: Sync data
-  api.post('/mongodb/sync', async (req, res) => {
+  apiRouter.post('/mongodb/sync', async (req, res) => {
     const { direction } = req.body; // 'push' or 'pull'
     if (!isMongoActive()) {
       return res.status(400).json({
@@ -299,7 +341,7 @@ export async function createExpressApp() {
       const remoteData = await pullAllFromMongo();
       if (remoteData) {
         db = remoteData;
-        saveDatabaseLocalSync(db);
+        saveDatabase(db);
         return res.json({ success: true, message: 'Live data successfully pulled from MongoDB Atlas Cloud!' });
       } else {
         return res.status(404).json({ success: false, error: 'No data documents found in MongoDB Cloud database.' });
@@ -315,8 +357,7 @@ export async function createExpressApp() {
   });
 
   // Get full state (for fast client hydration)
-  api.get('/state', async (req, res) => {
-    await refreshStateFromMongo(false);
+  apiRouter.get('/state', (req, res) => {
     res.json({
       products: db.products,
       users: db.users.map((u) => {
@@ -332,111 +373,139 @@ export async function createExpressApp() {
     });
   });
 
-function normalizePhone(p?: string): string {
-  if (!p) return '';
-  let cleaned = String(p).replace(/[\s\-\(\)\+]/g, '').trim();
-  if (cleaned.startsWith('880')) {
-    cleaned = '0' + cleaned.slice(3);
-  }
-  return cleaned;
-}
+  // Client state synchronization for serverless persistence
+  apiRouter.post('/sync/client-state', (req, res) => {
+    try {
+      const { products, sales, users, stockTransactions, payments, settings } = req.body || {};
+
+      if (Array.isArray(products) && products.length > 0) {
+        const prodMap = new Map<string, Product>();
+        db.products.forEach((p) => prodMap.set(p.id, p));
+        products.forEach((p: Product) => prodMap.set(p.id, p));
+        db.products = Array.from(prodMap.values());
+      }
+
+      if (Array.isArray(sales) && sales.length > 0) {
+        const salesMap = new Map<string, Sale>();
+        db.sales.forEach((s) => salesMap.set(s.id, s));
+        sales.forEach((s: Sale) => salesMap.set(s.id, s));
+        db.sales = Array.from(salesMap.values());
+      }
+
+      if (Array.isArray(users) && users.length > 0) {
+        const userMap = new Map<string, User>();
+        db.users.forEach((u) => userMap.set(u.id, u));
+        users.forEach((u: User) => {
+          const existing = userMap.get(u.id);
+          userMap.set(u.id, { ...existing, ...u });
+        });
+        db.users = Array.from(userMap.values());
+      }
+
+      if (Array.isArray(stockTransactions) && stockTransactions.length > 0) {
+        const txMap = new Map<string, StockTransaction>();
+        db.stockTransactions.forEach((t) => txMap.set(t.id, t));
+        stockTransactions.forEach((t: StockTransaction) => txMap.set(t.id, t));
+        db.stockTransactions = Array.from(txMap.values());
+      }
+
+      if (Array.isArray(payments) && payments.length > 0) {
+        const payMap = new Map<string, PaymentRecord>();
+        db.payments.forEach((p) => payMap.set(p.id, p));
+        payments.forEach((p: PaymentRecord) => payMap.set(p.id, p));
+        db.payments = Array.from(payMap.values());
+      }
+
+      if (settings && typeof settings === 'object') {
+        Object.assign(db.settings, settings);
+      }
+
+      saveDatabase(db);
+      res.json({ success: true, count: { products: db.products.length, sales: db.sales.length } });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || 'Sync error' });
+    }
+  });
 
   // Auth: Login
-  api.post('/auth/login', async (req, res) => {
+  apiRouter.post('/auth/login', async (req, res) => {
     try {
-      await refreshStateFromMongo(false);
-    } catch {
-      // Continue even if remote sync timed out
-    }
+      const body = req.body || {};
+      const cleanPhone = body.phone ? String(body.phone).trim() : '';
+      const cleanPassword = body.password ? String(body.password).trim() : '';
 
-    const { phone, password } = req.body;
-    const cleanPhone = normalizePhone(phone);
-    const cleanPass = String(password || '').trim();
-
-    // 1. Master Admin Account Guarantee: NEVER locked out
-    if (cleanPhone === '01613522678' && cleanPass === '02369') {
-      let admin = db.users.find((u) => normalizePhone(u.phone) === '01613522678' && u.role === 'ADMIN');
-      if (!admin) {
-        admin = {
-          id: 'ADMIN-0001',
-          name: 'Admin Manager',
-          phone: '01613522678',
-          passwordHash: '02369',
-          role: 'ADMIN',
-          status: 'ACTIVE',
-          totalSales: 0,
-          totalPaid: 0,
-          currentDue: 0,
-          joinedDate: '10 September 2026',
-          address: 'Factory 1, Dhaka',
-          email: 'admin@deshibite.com',
-        };
-        db.users.unshift(admin);
-        saveDatabaseLocalSync(db);
+      if (!cleanPhone || !cleanPassword) {
+        return res.status(400).json({ error: 'Phone number and password are required' });
       }
-      const { passwordHash, ...safeAdmin } = admin;
-      return res.json({ success: true, user: safeAdmin });
-    }
 
-    // 2. Master Default Agent Guarantee: NEVER locked out
-    if (cleanPhone === '01763213388' && cleanPass === '123456') {
-      let agent = db.users.find((u) => normalizePhone(u.phone) === '01763213388' && u.role === 'AGENT');
-      if (!agent) {
-        agent = {
-          id: 'AGENT-0003',
-          name: 'Toha Jamil',
-          phone: '01763213388',
-          passwordHash: '123456',
-          role: 'AGENT',
-          status: 'ACTIVE',
-          totalSales: 0,
-          totalPaid: 0,
-          currentDue: 0,
-          address: 'Dhaka',
-          joinedDate: '17 September 2026',
-        };
-        db.users.push(agent);
-        saveDatabaseLocalSync(db);
+      if (!db || !Array.isArray(db.users) || db.users.length === 0) {
+        db = loadDatabase();
       }
-      const { passwordHash, ...safeAgent } = agent;
-      return res.json({ success: true, user: safeAgent });
+
+      let user = (db.users || []).find((u) => u.phone === cleanPhone);
+
+      // If not found in local memory, check MongoDB directly if active
+      if (!user && isMongoActive()) {
+        try {
+          const mongoUser = await getMongoUserByPhone(cleanPhone);
+          if (mongoUser) {
+            user = mongoUser;
+            if (!db.users.some((u) => u.id === user!.id)) {
+              db.users.push(user);
+            }
+          }
+        } catch (err) {
+          console.warn('[MongoDB] Auth lookup fallback notice:', err);
+        }
+      }
+
+      // If still not found, check INITIAL_USERS as ultimate fallback
+      if (!user) {
+        const seedUser = INITIAL_USERS.find((u) => u.phone === cleanPhone);
+        if (seedUser) {
+          user = seedUser;
+          if (!db.users.some((u) => u.id === user!.id)) {
+            db.users.push(user);
+          }
+        }
+      }
+
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid phone number or password' });
+      }
+
+      if (user.passwordHash !== cleanPassword) {
+        return res.status(401).json({ error: 'Invalid phone number or password' });
+      }
+
+      if (user.status === 'PENDING') {
+        return res.status(403).json({
+          error: 'Your account registration is currently PENDING approval by an Administrator.',
+        });
+      }
+
+      if (user.status === 'REJECTED') {
+        return res.status(403).json({
+          error: 'Your account registration has been rejected. Please contact DESHI BITE management.',
+        });
+      }
+
+      if (user.status === 'SUSPENDED') {
+        return res.status(403).json({
+          error: 'Your account is suspended. Please contact management.',
+        });
+      }
+
+      const { passwordHash, ...safeUser } = user;
+      return res.json({ success: true, user: safeUser });
+    } catch (err: any) {
+      console.error('[Login Error]:', err);
+      return res.status(500).json({ error: err?.message || 'Server error during login authentication' });
     }
-
-    // 3. Registered users database lookup
-    const user = db.users.find((u) => normalizePhone(u.phone) === cleanPhone);
-
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid phone number or password' });
-    }
-
-    if (String(user.passwordHash || '').trim() !== cleanPass) {
-      return res.status(401).json({ error: 'Invalid phone number or password' });
-    }
-
-    if (user.status === 'PENDING') {
-      return res.status(403).json({
-        error: 'Your account registration is currently PENDING approval by an Administrator.',
-      });
-    }
-
-    if (user.status === 'REJECTED') {
-      return res.status(403).json({
-        error: 'Your account registration has been rejected. Please contact DESHI BITE management.',
-      });
-    }
-
-    if (user.status === 'SUSPENDED') {
-      return res.status(403).json({
-        error: 'Your account is suspended. Please contact management.',
-      });
-    }
-
-    const { passwordHash, ...safeUser } = user;
-    res.json({ success: true, user: safeUser });
   });
 
   // Auth: Register Agent
-  api.post('/auth/register', async (req, res) => {
+  apiRouter.post('/auth/register', (req, res) => {
     const { name, phone, password, address } = req.body;
     if (!name || !phone || !password) {
       return res.status(400).json({ error: 'Name, phone, and password are required' });
@@ -491,7 +560,7 @@ function normalizePhone(p?: string): string {
       timestamp: dt.timestamp,
     });
 
-    await saveDatabase(db);
+    saveDatabase(db);
     res.json({
       success: true,
       message: 'Agent registration submitted successfully! Please wait for Admin approval.',
@@ -500,7 +569,7 @@ function normalizePhone(p?: string): string {
   });
 
   // Auth: Change password
-  api.post('/auth/change-password', async (req, res) => {
+  apiRouter.post('/auth/change-password', (req, res) => {
     const { userId, oldPassword, newPassword } = req.body;
     const user = db.users.find((u) => u.id === userId);
     if (!user) {
@@ -516,6 +585,10 @@ function normalizePhone(p?: string): string {
     }
 
     user.passwordHash = newPassword.trim();
+    saveDatabase(db);
+    syncToMongo(async () => {
+      await mongoUpsert('users', user.id, user);
+    });
 
     const dt = getBangladeshDateTime();
     db.logs.unshift({
@@ -529,13 +602,13 @@ function normalizePhone(p?: string): string {
       time: dt.time,
       timestamp: dt.timestamp,
     });
+    saveDatabase(db);
 
-    await saveDatabase(db);
     res.json({ success: true, message: 'Password updated successfully!' });
   });
 
-  // Users: Update Profile
-  api.put('/users/:id/profile', async (req, res) => {
+  // Users: Update Profile (Address & Email - Name and Phone are strictly immutable)
+  apiRouter.put('/users/:id/profile', (req, res) => {
     const { id } = req.params;
     const { address, email } = req.body;
     const user = db.users.find((u) => u.id === id);
@@ -543,12 +616,18 @@ function normalizePhone(p?: string): string {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // Name and phone are strictly IMMUTABLE as requested
     if (address !== undefined) {
       user.address = String(address).trim();
     }
     if (email !== undefined) {
       user.email = String(email).trim();
     }
+
+    saveDatabase(db);
+    syncToMongo(async () => {
+      await mongoUpsert('users', user.id, user);
+    });
 
     const dt = getBangladeshDateTime();
     db.logs.unshift({
@@ -557,102 +636,73 @@ function normalizePhone(p?: string): string {
       role: user.role,
       action: 'Profile Updated',
       referenceId: user.id,
-      details: `Updated personal profile details`,
+      details: `${user.name} updated profile details (address / email)`,
       date: dt.date,
       time: dt.time,
       timestamp: dt.timestamp,
     });
+    saveDatabase(db);
 
-    await saveDatabase(db);
     const { passwordHash, ...safeUser } = user;
-    res.json({ success: true, user: safeUser });
+    res.json({
+      success: true,
+      message: 'Profile details updated successfully!',
+      user: safeUser,
+    });
   });
 
-  // Agents: Update Status
-  api.put('/agents/:id/status', async (req, res) => {
+  // Agents: Update status (Approve, Reject, Suspend, Activate)
+  apiRouter.put('/agents/:id/status', (req, res) => {
     const { id } = req.params;
-    const { status, adminName, phone, name, address } = req.body;
-    let agent = db.users.find((u) => u.id === id && u.role === 'AGENT');
-    
-    // Fallback: match by phone if not matched by ID
-    if (!agent && phone) {
-      agent = db.users.find((u) => normalizePhone(u.phone) === normalizePhone(phone) && u.role === 'AGENT');
+    const { status, adminName } = req.body;
+    const agentIndex = db.users.findIndex((u) => u.id === id);
+
+    if (agentIndex === -1) {
+      return res.status(404).json({ error: 'Agent not found' });
     }
 
-    // Fallback: match any pending agent if only one pending exists
-    if (!agent) {
-      const pendingList = db.users.filter((u) => u.role === 'AGENT' && u.status === 'PENDING');
-      if (pendingList.length === 1) {
-        agent = pendingList[0];
-      }
-    }
-
-    const validStatuses = ['ACTIVE', 'REJECTED', 'SUSPENDED'];
-    const targetStatus = validStatuses.includes(status) ? status : 'ACTIVE';
+    const agent = db.users[agentIndex];
     const dt = getBangladeshDateTime();
 
-    if (targetStatus === 'REJECTED') {
-      if (agent) {
-        const idx = db.users.findIndex((u) => u.id === agent!.id);
-        if (idx !== -1) {
-          db.users.splice(idx, 1);
-        }
-      }
+    if (status === 'REJECTED') {
+      // User directive: Rejecting an agent must completely remove them from the admin panel
+      db.users.splice(agentIndex, 1);
       db.logs.unshift({
         id: `LOG-${Date.now()}`,
         user: adminName || 'Admin Manager',
         role: 'ADMIN',
-        action: 'Agent Registration Rejected & Removed',
+        action: 'Agent Application Rejected',
         referenceId: id,
-        details: `${agent ? agent.name : 'Executive'} registration was rejected and removed from system`,
+        details: `${agent.name} (${agent.phone}) registration was rejected and removed from system`,
         date: dt.date,
         time: dt.time,
         timestamp: dt.timestamp,
       });
-      await saveDatabase(db);
+      saveDatabase(db);
       return res.json({ success: true, message: 'Agent registration rejected and removed from admin portal', removedId: id });
     }
 
-    if (!agent) {
-      // If agent was registered in client state or on another serverless lambda, auto-upsert into server state now!
-      agent = {
-        id: id && id.startsWith('AGENT-') ? id : `AGENT-${String(db.users.filter((u) => u.role === 'AGENT').length + 1).padStart(4, '0')}`,
-        name: name || 'Executive',
-        phone: phone || '',
-        passwordHash: '123456',
-        role: 'AGENT',
-        status: targetStatus,
-        totalSales: 0,
-        totalPaid: 0,
-        currentDue: 0,
-        joinedDate: dt.date,
-        address: address || '',
-      };
-      db.users.push(agent);
-    } else {
-      agent.status = targetStatus;
-      if (name && !agent.name) agent.name = name;
-      if (phone && !agent.phone) agent.phone = phone;
-    }
+    agent.status = status;
 
+    // Log
     db.logs.unshift({
       id: `LOG-${Date.now()}`,
       user: adminName || 'Admin Manager',
       role: 'ADMIN',
-      action: `Agent Status Updated to ${targetStatus}`,
+      action: `Agent Status Updated to ${status}`,
       referenceId: agent.id,
-      details: `${agent.name} status updated to ${targetStatus}`,
+      details: `${agent.name} status updated to ${status}`,
       date: dt.date,
       time: dt.time,
       timestamp: dt.timestamp,
     });
 
-    await saveDatabase(db);
+    saveDatabase(db);
     res.json({ success: true, agent });
   });
 
   // Agents: Delete / Remove
-  api.delete('/agents/:id', async (req, res) => {
+  apiRouter.delete('/agents/:id', (req, res) => {
     const { id } = req.params;
     const index = db.users.findIndex((u) => u.id === id);
     if (index === -1) return res.status(404).json({ error: 'Agent not found' });
@@ -673,12 +723,12 @@ function normalizePhone(p?: string): string {
       timestamp: dt.timestamp,
     });
 
-    await saveDatabase(db);
+    saveDatabase(db);
     res.json({ success: true, message: `Agent "${agent.name}" removed successfully`, removedId: id });
   });
 
   // Products: Add
-  api.post('/products', async (req, res) => {
+  apiRouter.post('/products', (req, res) => {
     const {
       name,
       retailPriceKg,
@@ -743,12 +793,12 @@ function normalizePhone(p?: string): string {
       timestamp: dt.timestamp,
     });
 
-    await saveDatabase(db);
+    saveDatabase(db);
     res.json({ success: true, product: newProd });
   });
 
   // Products: Edit
-  api.put('/products/:id', async (req, res) => {
+  apiRouter.put('/products/:id', (req, res) => {
     const { id } = req.params;
     const prod = db.products.find((p) => p.id === id);
     if (!prod) return res.status(404).json({ error: 'Product not found' });
@@ -780,12 +830,12 @@ function normalizePhone(p?: string): string {
       timestamp: dt.timestamp,
     });
 
-    await saveDatabase(db);
+    saveDatabase(db);
     res.json({ success: true, product: prod });
   });
 
   // Products: Delete
-  api.delete('/products/:id', async (req, res) => {
+  apiRouter.delete('/products/:id', (req, res) => {
     const { id } = req.params;
     const index = db.products.findIndex((p) => p.id === id);
     if (index === -1) return res.status(404).json({ error: 'Product not found' });
@@ -806,40 +856,56 @@ function normalizePhone(p?: string): string {
       timestamp: dt.timestamp,
     });
 
-    await saveDatabase(db);
+    saveDatabase(db);
     res.json({ success: true, message: `Product "${prod.name}" deleted successfully`, deletedId: id });
   });
 
   // Sales: Create Sale (Atomic Transaction)
-  api.post('/sales', async (req, res) => {
+  apiRouter.post('/sales', (req, res) => {
     const { agentId, saleType, items, customerName, customerPhone, customerAddress, discount } = req.body;
+    
+    // Find agent or admin
     let agent = db.users.find((u) => u.id === agentId);
     if (!agent) {
-      agent = db.users.find((u) => u.role === 'ADMIN') || db.users[0];
+      agent = INITIAL_USERS.find((u) => u.id === agentId);
+      if (agent && !db.users.some(u => u.id === agent!.id)) {
+        db.users.push(agent);
+      }
+    }
+    // Default fallback to Admin Manager or first user
+    if (!agent) {
+      agent = db.users.find((u) => u.role === 'ADMIN') || INITIAL_USERS[0];
     }
 
     if (!items || !items.length) {
       return res.status(400).json({ error: 'At least one product item is required' });
     }
 
-    // Pre-validate stock
+    // Ensure all products exist in db.products
     for (const item of items) {
-      const prod = db.products.find((p) => p.id === item.productId);
+      let prod = db.products.find((p) => p.id === item.productId);
       if (!prod) {
-        return res.status(400).json({ error: `Product ${item.productName} not found` });
-      }
-
-      if (item.unit === 'KG') {
-        if (prod.stockKg < item.quantity) {
-          return res.status(400).json({
-            error: `Insufficient stock for ${prod.name}! Requested: ${item.quantity} KG, Available: ${prod.stockKg} KG.`,
-          });
-        }
-      } else {
-        if (prod.stockPcs < item.quantity) {
-          return res.status(400).json({
-            error: `Insufficient stock for ${prod.name}! Requested: ${item.quantity} PCS, Available: ${prod.stockPcs} PCS.`,
-          });
+        const seedProd = INITIAL_PRODUCTS.find((p) => p.id === item.productId);
+        if (seedProd) {
+          prod = { ...seedProd };
+          db.products.push(prod);
+        } else {
+          prod = {
+            id: item.productId,
+            name: item.productName || 'Direct Item',
+            unit: item.unit || 'KG',
+            retailPriceKg: item.unit === 'KG' ? item.unitPrice : null,
+            retailPricePcs: item.unit === 'PCS' ? item.unitPrice : null,
+            wholesalePriceKg: item.unit === 'KG' ? item.unitPrice : null,
+            wholesalePricePcs: item.unit === 'PCS' ? item.unitPrice : null,
+            stockKg: 100,
+            stockPcs: 100,
+            lowStockThresholdKg: 0.5,
+            lowStockThresholdPcs: 20,
+            active: true,
+            updatedAt: getBangladeshDateTime().date,
+          };
+          db.products.push(prod);
         }
       }
     }
@@ -915,12 +981,8 @@ function normalizePhone(p?: string): string {
     }
 
     // 2. Increase Agent Due & Total Sales
-    if (agent.role === 'AGENT') {
-      agent.totalSales = Number((agent.totalSales + grandTotal).toFixed(2));
-      agent.currentDue = Number((agent.currentDue + grandTotal).toFixed(2));
-    } else {
-      agent.totalSales = Number((agent.totalSales + grandTotal).toFixed(2));
-    }
+    agent.totalSales = Number((agent.totalSales + grandTotal).toFixed(2));
+    agent.currentDue = Number((agent.currentDue + grandTotal).toFixed(2));
 
     // 3. Create Sale Record
     const newSale: Sale = {
@@ -957,7 +1019,7 @@ function normalizePhone(p?: string): string {
       timestamp: dt.timestamp,
     });
 
-    await saveDatabase(db);
+    saveDatabase(db);
 
     res.json({
       success: true,
@@ -968,7 +1030,7 @@ function normalizePhone(p?: string): string {
   });
 
   // Stock: Adjustment / Stock In
-  api.post('/stock/change', async (req, res) => {
+  apiRouter.post('/stock/change', (req, res) => {
     const { productId, type, quantity, unit, referenceNote, recordedBy } = req.body;
     const prod = db.products.find((p) => p.id === productId);
     if (!prod) return res.status(404).json({ error: 'Product not found' });
@@ -1027,12 +1089,12 @@ function normalizePhone(p?: string): string {
       timestamp: dt.timestamp,
     });
 
-    await saveDatabase(db);
+    saveDatabase(db);
     res.json({ success: true, transaction: stx, updatedProduct: prod });
   });
 
   // Stock: Delete Transaction
-  api.delete('/stock/:id', async (req, res) => {
+  apiRouter.delete('/stock/:id', (req, res) => {
     const { id } = req.params;
     const index = db.stockTransactions.findIndex((tx) => tx.id === id);
     if (index === -1) {
@@ -1054,17 +1116,14 @@ function normalizePhone(p?: string): string {
       timestamp: dt.timestamp,
     });
 
-    await saveDatabase(db);
+    saveDatabase(db);
     res.json({ success: true, message: 'Stock transaction removed successfully', deletedId: id });
   });
 
   // Due Management: Record Payment / Clear Due
-  api.post('/payments', async (req, res) => {
+  apiRouter.post('/payments', (req, res) => {
     const { agentId, amount, paymentMethod, referenceNote, recordedBy } = req.body;
-    let agent = db.users.find((u) => u.id === agentId);
-    if (!agent && req.body.phone) {
-      agent = db.users.find((u) => normalizePhone(u.phone) === normalizePhone(req.body.phone));
-    }
+    const agent = db.users.find((u) => u.id === agentId && u.role === 'AGENT');
     if (!agent) {
       return res.status(404).json({ error: 'Agent not found' });
     }
@@ -1100,6 +1159,7 @@ function normalizePhone(p?: string): string {
 
     db.payments.unshift(paymentRecord);
 
+    // Notify Agent
     const dueNotificationText = remainingDue < 0
       ? `Admin recorded payment of ৳${numAmount.toLocaleString()}. Your account now has an advance balance of ৳${Math.abs(remainingDue).toLocaleString()} (Due: -৳${Math.abs(remainingDue).toLocaleString()}). Next sales will automatically deduct from this balance.`
       : `Admin recorded payment of ৳${numAmount.toLocaleString()}. Your remaining due is now ৳${remainingDue.toLocaleString()}.`;
@@ -1117,6 +1177,7 @@ function normalizePhone(p?: string): string {
       timestamp: dt.timestamp,
     });
 
+    // Log
     db.logs.unshift({
       id: `LOG-${Date.now()}`,
       user: recordedBy || 'Admin Manager',
@@ -1129,7 +1190,7 @@ function normalizePhone(p?: string): string {
       timestamp: dt.timestamp,
     });
 
-    await saveDatabase(db);
+    saveDatabase(db);
     res.json({
       success: true,
       payment: paymentRecord,
@@ -1138,21 +1199,21 @@ function normalizePhone(p?: string): string {
   });
 
   // Notifications: Mark all read
-  api.put('/notifications/read-all', async (req, res) => {
+  apiRouter.put('/notifications/read-all', (req, res) => {
     db.notifications.forEach((n) => (n.isRead = true));
-    await saveDatabase(db);
+    saveDatabase(db);
     res.json({ success: true });
   });
 
   // Settings: Update
-  api.post('/settings', async (req, res) => {
+  apiRouter.post('/settings', (req, res) => {
     Object.assign(db.settings, req.body);
-    await saveDatabase(db);
+    saveDatabase(db);
     res.json({ success: true, settings: db.settings });
   });
 
   // Google Sheets Sync Bridge
-  api.post('/sync/sheets', async (req, res) => {
+  apiRouter.post('/sync/sheets', async (req, res) => {
     const { scriptUrl } = req.body;
     const targetUrl = scriptUrl || db.settings.googleAppsScriptUrl;
 
@@ -1163,6 +1224,7 @@ function normalizePhone(p?: string): string {
     }
 
     try {
+      // Forward payload to Google Apps Script Web App
       const response = await fetch(targetUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1188,9 +1250,9 @@ function normalizePhone(p?: string): string {
     }
   });
 
-  // Mount API router on BOTH '/api' and '/' to ensure 100% compatibility with Vercel rewrites
-  app.use('/api', api);
-  app.use('/', api);
+  // Mount API router to handle both /api/* and /* (supporting both standard and Vercel rewritten paths)
+  app.use('/api', apiRouter);
+  app.use('/', apiRouter);
 
   // Graceful database error handling fallback middleware
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -1209,6 +1271,19 @@ function normalizePhone(p?: string): string {
     next(err);
   });
 
+  // Global JSON error response handler (never return HTML errors for API calls)
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('[API Server Error]:', err?.message || err);
+    if (res.headersSent) {
+      return next(err);
+    }
+    const statusCode = typeof err.status === 'number' ? err.status : (typeof err.statusCode === 'number' ? err.statusCode : 500);
+    res.status(statusCode).json({
+      error: err.message || 'Internal server error occurred',
+      success: false,
+    });
+  });
+
   return app;
 }
 
@@ -1216,19 +1291,14 @@ export async function startServer() {
   const app = await createExpressApp();
 
   // Vite Middleware in dev or static files in production
-  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-    try {
-      const viteMod = ['v', 'i', 't', 'e'].join('');
-      const { createServer: createViteServer } = await import(/* @vite-ignore */ viteMod);
-      const vite = await createViteServer({
-        server: { middlewareMode: true },
-        appType: 'spa',
-      });
-      app.use(vite.middlewares);
-    } catch (e) {
-      console.warn('Vite middleware could not be loaded:', e);
-    }
-  } else if (!process.env.VERCEL) {
+  if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
@@ -1243,7 +1313,14 @@ export async function startServer() {
   return app;
 }
 
-// Only auto-listen if not running as a serverless function
-if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+// Only auto-listen if directly executed as the main server process (not when imported in serverless functions)
+const isServerEntry = Boolean(
+  process.argv[1] &&
+  (process.argv[1].endsWith('server.ts') || process.argv[1].endsWith('server.cjs') || process.argv[1].endsWith('server.js')) &&
+  !process.env.VERCEL &&
+  !process.env.NOW_REGION
+);
+
+if (isServerEntry) {
   startServer();
 }

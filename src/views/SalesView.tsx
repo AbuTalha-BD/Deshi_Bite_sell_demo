@@ -53,15 +53,13 @@ export const SalesView: React.FC = () => {
           </p>
         </div>
 
-        {!isAdmin && (
-          <button
-            onClick={() => setIsSellModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition-all cursor-pointer"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            <span>SELL PRODUCT</span>
-          </button>
-        )}
+        <button
+          onClick={() => setIsSellModalOpen(true)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition-all cursor-pointer shrink-0"
+        >
+          <ShoppingBag className="w-4 h-4" />
+          <span>{isAdmin ? 'NEW SALE / SELL PRODUCT' : 'SELL PRODUCT'}</span>
+        </button>
       </div>
 
       {/* Summary KPI chips */}

@@ -2,17 +2,17 @@
   "products": [
     {
       "id": "PROD-1001",
-      "name": "Chicken Samosa Special",
-      "retailPriceKg": 650,
+      "name": "Chicken Samosa",
+      "retailPriceKg": 600,
       "retailPricePcs": null,
       "wholesalePriceKg": 580,
       "wholesalePricePcs": null,
-      "stockKg": 1.5,
+      "stockKg": 2.5,
       "stockPcs": 0,
       "lowStockThresholdKg": 0.5,
       "lowStockThresholdPcs": 10,
       "active": true,
-      "updatedAt": "27 September 2026"
+      "updatedAt": "24 September 2026"
     },
     {
       "id": "PROD-1002",
@@ -137,14 +137,28 @@
       "name": "Borfi",
       "retailPriceKg": 600,
       "retailPricePcs": null,
-      "wholesalePriceKg": 550,
+      "wholesalePriceKg": 580,
       "wholesalePricePcs": null,
-      "stockKg": 1,
+      "stockKg": 0,
       "stockPcs": 0,
+      "lowStockThresholdKg": 0.5,
+      "lowStockThresholdPcs": 10,
+      "active": false,
+      "updatedAt": "23 September 2026"
+    },
+    {
+      "id": "PROD-1012",
+      "name": "Special Testing Pickle 500g",
+      "retailPriceKg": null,
+      "retailPricePcs": 250,
+      "wholesalePriceKg": null,
+      "wholesalePricePcs": null,
+      "stockKg": 0,
+      "stockPcs": 48,
       "lowStockThresholdKg": 0.5,
       "lowStockThresholdPcs": 20,
       "active": true,
-      "updatedAt": "27 September 2026"
+      "updatedAt": "29 September 2026"
     }
   ],
   "users": [
@@ -155,12 +169,12 @@
       "passwordHash": "02369",
       "role": "ADMIN",
       "status": "ACTIVE",
-      "totalSales": 600,
+      "totalSales": 0,
       "totalPaid": 0,
       "currentDue": 0,
       "joinedDate": "10 September 2026",
       "address": "Factory 1, Dhaka",
-      "email": "admin@deshibitebd.com"
+      "email": "admin@deshibite.com"
     },
     {
       "id": "AGENT-0003",
@@ -169,135 +183,82 @@
       "passwordHash": "123456",
       "role": "AGENT",
       "status": "ACTIVE",
-      "totalSales": 0,
-      "totalPaid": 500,
-      "currentDue": -500,
+      "totalSales": 500,
+      "totalPaid": 0,
+      "currentDue": 500,
       "address": "",
       "joinedDate": "17 September 2026"
-    },
-    {
-      "id": "AGENT-0002",
-      "name": "nahid",
-      "phone": "01710007808",
-      "passwordHash": "password123",
-      "role": "AGENT",
-      "status": "ACTIVE",
-      "totalSales": 0,
-      "totalPaid": 0,
-      "currentDue": 0,
-      "address": "",
-      "joinedDate": "27 September 2026"
-    },
-    {
-      "id": "AGENT-UNKNOWN",
-      "name": "test_unknown",
-      "phone": "01999999999",
-      "passwordHash": "123456",
-      "role": "AGENT",
-      "status": "ACTIVE",
-      "totalSales": 0,
-      "totalPaid": 0,
-      "currentDue": 0,
-      "joinedDate": "27 September 2026",
-      "address": ""
     }
   ],
   "sales": [
     {
-      "id": "SALE-1790526485595-1",
-      "invoiceNo": "DB-20260927-00001",
-      "agentId": "ADMIN-0001",
-      "agentName": "Admin Manager",
-      "customerName": "Direct Customer",
+      "id": "SALE-1790695808127-1",
+      "invoiceNo": "DB-20260929-00001",
+      "agentId": "AGENT-0003",
+      "agentName": "Toha Jamil",
+      "customerName": "Customer Test",
       "customerPhone": "",
       "customerAddress": "",
       "saleType": "RETAIL",
       "items": [
         {
-          "productId": "PROD-1001",
-          "productName": "Chicken Samosa",
-          "unit": "KG",
-          "quantity": 1,
-          "unitPrice": 600,
-          "subtotal": 600
+          "productId": "PROD-1012",
+          "productName": "Special Testing Pickle 500g",
+          "unit": "PCS",
+          "quantity": 2,
+          "unitPrice": 250,
+          "subtotal": 500
         }
       ],
-      "subtotal": 600,
+      "subtotal": 500,
       "discount": 0,
-      "grandTotal": 600,
+      "grandTotal": 500,
       "paymentStatus": "UNPAID",
-      "createdAtDate": "27 September 2026",
-      "createdAtTime": "10:28 PM",
-      "timestamp": 1790526485572
+      "createdAtDate": "29 September 2026",
+      "createdAtTime": "09:30 PM",
+      "timestamp": 1790695808127
     }
   ],
   "stockTransactions": [
     {
-      "id": "STX-1790526485595-500",
-      "productId": "PROD-1001",
-      "productName": "Chicken Samosa",
+      "id": "STX-1790695808127-192",
+      "productId": "PROD-1012",
+      "productName": "Special Testing Pickle 500g",
       "type": "SALE_OUT",
-      "quantity": 1,
-      "unit": "KG",
-      "referenceNote": "Deducted via Sale DB-20260927-00001",
-      "recordedBy": "Admin Manager",
-      "date": "27 September 2026",
-      "time": "10:28 PM",
-      "createdAtDate": "27 September 2026",
-      "createdAtTime": "10:28 PM",
-      "timestamp": 1790526485572,
-      "stockBefore": 2.5,
-      "stockAfter": 1.5
-    }
-  ],
-  "payments": [
+      "quantity": 2,
+      "unit": "PCS",
+      "referenceNote": "Deducted via Sale DB-20260929-00001",
+      "recordedBy": "Toha Jamil",
+      "date": "29 September 2026",
+      "time": "09:30 PM",
+      "createdAtDate": "29 September 2026",
+      "createdAtTime": "09:30 PM",
+      "timestamp": 1790695808127,
+      "stockBefore": 50,
+      "stockAfter": 48
+    },
     {
-      "id": "PAY-20260927-9483",
-      "agentId": "AGENT-0003",
-      "agentName": "Toha Jamil",
-      "amount": 500,
-      "previousDue": 0,
-      "remainingDue": -500,
-      "paymentMethod": "BKASH",
-      "referenceNote": "Test payment",
+      "id": "STX-1790695808123",
+      "productId": "PROD-1012",
+      "productName": "Special Testing Pickle 500g",
+      "type": "INITIAL",
+      "quantity": 50,
+      "unit": "PCS",
+      "referenceNote": "Initial stock on product creation",
       "recordedBy": "Admin Manager",
-      "date": "27 September 2026",
-      "time": "10:29 PM",
-      "createdAtDate": "27 September 2026",
-      "createdAtTime": "10:29 PM",
-      "timestamp": 1790526544289
+      "date": "29 September 2026",
+      "time": "09:30 PM",
+      "timestamp": 1790695808098
     }
   ],
+  "payments": [],
   "notifications": [
-    {
-      "id": "NOTIF-1790526544289",
-      "title": "Advance Payment Recorded",
-      "message": "Admin recorded payment of ৳500. Your account now has an advance balance of ৳500 (Due: -৳500). Next sales will automatically deduct from this balance.",
-      "type": "SUCCESS",
-      "isRead": true,
-      "date": "27 September 2026",
-      "time": "10:29 PM",
-      "targetRole": "AGENT",
-      "agentId": "AGENT-0003",
-      "timestamp": 1790526544289
-    },
-    {
-      "id": "NOTIF-1790525734061",
-      "title": "New Agent Registration Pending",
-      "message": "nahid (01710007808) has applied for an agent account.",
-      "type": "INFO",
-      "isRead": true,
-      "date": "27 September 2026",
-      "time": "10:15 PM",
-      "targetRole": "ADMIN",
-      "timestamp": 1790525734039
-    },
     {
       "id": "NOTIF-1790170760297",
       "title": "Payment Received & Due Updated",
       "message": "Admin recorded payment of ৳4,120. Your remaining due is now ৳0.",
       "type": "SUCCESS",
-      "isRead": true,
+      "isRead": false,
       "date": "23 September 2026",
       "time": "07:39 PM",
       "targetRole": "AGENT",
@@ -352,147 +313,26 @@
   ],
   "logs": [
     {
-      "id": "LOG-1790526552142",
-      "user": "Admin Manager",
-      "role": "ADMIN",
-      "action": "Profile Updated",
-      "referenceId": "ADMIN-0001",
-      "details": "Updated personal profile details",
-      "date": "27 September 2026",
-      "time": "10:29 PM",
-      "timestamp": 1790526552141
-    },
-    {
-      "id": "LOG-1790526544289",
-      "user": "Admin Manager",
-      "role": "ADMIN",
-      "action": "Payment Recorded",
-      "referenceId": "PAY-20260927-9483",
-      "details": "Received ৳500 from Toha Jamil. Remaining due: -৳500 (Advance)",
-      "date": "27 September 2026",
-      "time": "10:29 PM",
-      "timestamp": 1790526544289
-    },
-    {
-      "id": "LOG-1790526494128",
-      "user": "Admin Manager",
-      "role": "ADMIN",
-      "action": "Product Updated",
-      "referenceId": "PROD-1001",
-      "details": "Updated details/pricing for \"Chicken Samosa Special\"",
-      "date": "27 September 2026",
-      "time": "10:28 PM",
-      "timestamp": 1790526494127
-    },
-    {
-      "id": "LOG-1790526485595",
-      "user": "Admin Manager",
+      "id": "LOG-1790695808127",
+      "user": "Toha Jamil",
       "role": "AGENT",
       "action": "Sale Created",
-      "referenceId": "DB-20260927-00001",
-      "details": "Sold 1 items to Direct Customer for ৳600. Added to Agent Due.",
-      "date": "27 September 2026",
-      "time": "10:28 PM",
-      "timestamp": 1790526485572
+      "referenceId": "DB-20260929-00001",
+      "details": "Sold 1 items to Customer Test for ৳500. Added to Agent Due.",
+      "date": "29 September 2026",
+      "time": "09:30 PM",
+      "timestamp": 1790695808127
     },
     {
-      "id": "LOG-1790526396828",
-      "user": "Admin Manager",
-      "role": "ADMIN",
-      "action": "Product Updated",
-      "referenceId": "PROD-1011",
-      "details": "Updated details/pricing for \"Borfi\"",
-      "date": "27 September 2026",
-      "time": "10:26 PM",
-      "timestamp": 1790526396812
-    },
-    {
-      "id": "LOG-1790526389825",
+      "id": "LOG-1790695808123",
       "user": "Admin Manager",
       "role": "ADMIN",
       "action": "Product Added",
-      "referenceId": "PROD-1011",
-      "details": "Created product \"Borfi\"",
-      "date": "27 September 2026",
-      "time": "10:26 PM",
-      "timestamp": 1790526389825
-    },
-    {
-      "id": "LOG-1790526370127",
-      "user": "Admin Manager",
-      "role": "ADMIN",
-      "action": "Product Deleted",
-      "referenceId": "PROD-1011",
-      "details": "Deleted product \"Borfi\" (PROD-1011)",
-      "date": "27 September 2026",
-      "time": "10:26 PM",
-      "timestamp": 1790526370127
-    },
-    {
-      "id": "LOG-1790526191455",
-      "user": "Admin Manager",
-      "role": "ADMIN",
-      "action": "Profile Updated",
-      "referenceId": "ADMIN-0001",
-      "details": "Updated personal profile details",
-      "date": "27 September 2026",
-      "time": "10:23 PM",
-      "timestamp": 1790526191455
-    },
-    {
-      "id": "LOG-1790526014072",
-      "user": "Admin Manager",
-      "role": "ADMIN",
-      "action": "Product Updated",
-      "referenceId": "PROD-1001",
-      "details": "Updated details/pricing for \"Chicken Samosa\"",
-      "date": "27 September 2026",
-      "time": "10:20 PM",
-      "timestamp": 1790526014072
-    },
-    {
-      "id": "LOG-1790526006678",
-      "user": "Admin Manager",
-      "role": "ADMIN",
-      "action": "Product Updated",
-      "referenceId": "PROD-1001",
-      "details": "Updated details/pricing for \"Chicken Samosa\"",
-      "date": "27 September 2026",
-      "time": "10:20 PM",
-      "timestamp": 1790526006676
-    },
-    {
-      "id": "LOG-1790525748094",
-      "user": "Admin Manager",
-      "role": "ADMIN",
-      "action": "Agent Status Updated to ACTIVE",
-      "referenceId": "AGENT-UNKNOWN",
-      "details": "test_unknown status updated to ACTIVE",
-      "date": "27 September 2026",
-      "time": "10:15 PM",
-      "timestamp": 1790525748094
-    },
-    {
-      "id": "LOG-1790525739226",
-      "user": "Admin Manager",
-      "role": "ADMIN",
-      "action": "Agent Status Updated to ACTIVE",
-      "referenceId": "AGENT-0002",
-      "details": "nahid status updated to ACTIVE",
-      "date": "27 September 2026",
-      "time": "10:15 PM",
-      "timestamp": 1790525739225
-    },
-    {
-      "id": "LOG-1790525734061",
-      "user": "nahid",
-      "role": "AGENT",
-      "action": "Agent Registered (Pending)",
-      "referenceId": "AGENT-0002",
-      "details": "New registration with phone 01710007808",
-      "date": "27 September 2026",
-      "time": "10:15 PM",
-      "timestamp": 1790525734039
+      "referenceId": "PROD-1012",
+      "details": "Created product \"Special Testing Pickle 500g\"",
+      "date": "29 September 2026",
+      "time": "09:30 PM",
+      "timestamp": 1790695808098
     },
     {
       "id": "LOG-1790255770662",
@@ -748,17 +588,6 @@
       "timestamp": 1789650326888
     },
     {
-      "id": "LOG-001",
-      "user": "Admin Manager",
-      "role": "ADMIN",
-      "action": "Payment Recorded",
-      "referenceId": "PAY-20260916-5302",
-      "details": "Received ৳580 from Agent Rahim Ahmed. Remaining due ৳4,120.",
-      "date": "16 September 2026",
-      "time": "02:39 PM",
-      "timestamp": 1789569540000
-    },
-    {
       "id": "LOG-002",
       "user": "Rahim Ahmed",
       "role": "AGENT",
@@ -768,10 +597,21 @@
       "date": "16 September 2026",
       "time": "02:40 PM",
       "timestamp": 1789569600000
+    },
+    {
+      "id": "LOG-001",
+      "user": "Admin Manager",
+      "role": "ADMIN",
+      "action": "Payment Recorded",
+      "referenceId": "PAY-20260916-5302",
+      "details": "Received ৳580 from Agent Rahim Ahmed. Remaining due ৳4,120.",
+      "date": "16 September 2026",
+      "time": "02:39 PM",
+      "timestamp": 1789569540000
     }
   ],
   "settings": {
-    "businessName": "DESHI BITE Enterprise",
+    "businessName": "DESHI BITE",
     "subtitle": "Sales, Stock, Agent & Business Management System",
     "phone": "01613522678",
     "address": "Block-D, Mirpur-12, Dhaka-1216, Bangladesh",

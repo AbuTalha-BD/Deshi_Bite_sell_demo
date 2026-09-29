@@ -1,78 +1,64 @@
 import type { Request, Response } from 'express';
-import { createExpressApp } from '../server.ts';
-
-// Mark Vercel runtime environment
-process.env.VERCEL = '1';
+import { createExpressApp } from '../server';
 
 let cachedApp: any = null;
 
 export default async function handler(req: Request, res: Response) {
-  // Always attach CORS headers for cross-origin or client fetch compatibility
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
   try {
     if (!cachedApp) {
       cachedApp = await createExpressApp();
     }
 
-    // 1. Extract endpoint from rewrite query if present (destination: /api?endpoint=$1)
-    let endpoint = '';
-    if (req.query && req.query.endpoint !== undefined) {
-      const raw = req.query.endpoint;
-      endpoint = Array.isArray(raw) ? raw.join('/') : String(raw);
-      endpoint = endpoint.split('?')[0];
+    // Restore request URL if rewritten by Vercel
+    const xMatchedPath = (req.headers['x-matched-path'] as string) || '';
+    const originalUrl = (req.headers['x-original-url'] as string) || (req.headers['x-forwarded-uri'] as string) || '';
+    let query0 = (req as any).query?.['0'] || (req as any).query?.path;
+
+    if (!query0 && req.url) {
+      try {
+        const u = new URL(req.url, 'http://localhost');
+        query0 = u.searchParams.get('0');
+      } catch {
+        // ignore
+      }
     }
 
-    // 2. Check various headers that Vercel or proxies might set
-    const originalUri =
-      (req.headers['x-matched-path'] as string) ||
-      (req.headers['x-vercel-original-uri'] as string) ||
-      (req.headers['x-original-url'] as string) ||
-      (req.headers['x-rewrite-url'] as string) ||
-      '';
-
-    let pathPart = '';
-    if (endpoint) {
-      pathPart = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    } else if (originalUri && originalUri.includes('/api/')) {
-      pathPart = originalUri.substring(originalUri.indexOf('/api/') + 4);
-      pathPart = pathPart.split('?')[0];
-    } else if (req.url && req.url.includes('/api/')) {
-      pathPart = req.url.substring(req.url.indexOf('/api/') + 4);
-      pathPart = pathPart.split('?')[0];
-    } else if (req.url && req.url !== '/' && req.url !== '/api' && !req.url.startsWith('/api?')) {
-      pathPart = req.url.split('?')[0];
+    if (xMatchedPath && xMatchedPath.startsWith('/api')) {
+      req.url = xMatchedPath;
+    } else if (originalUrl && originalUrl.startsWith('/api')) {
+      req.url = originalUrl;
+    } else if (query0) {
+      const clean = Array.isArray(query0) ? query0.join('/') : String(query0);
+      req.url = `/api/${clean.replace(/^\//, '')}`;
     }
 
-    if (pathPart && !pathPart.startsWith('/')) {
-      pathPart = `/${pathPart}`;
+    return new Promise<void>((resolve) => {
+      res.on('finish', resolve);
+      res.on('close', resolve);
+      res.on('error', (err) => {
+        console.error('[Vercel Serverless Stream Error]:', err);
+        resolve();
+      });
+
+      cachedApp(req, res, (err: any) => {
+        if (err) {
+          console.error('[Unhandled Express Error in Serverless Handler]:', err);
+          if (!res.headersSent) {
+            res.statusCode = typeof err.status === 'number' ? err.status : 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: err.message || 'Internal server error occurred', success: false }));
+          }
+        }
+        resolve();
+      });
+    });
+  } catch (fatalErr: any) {
+    console.error('[Fatal Serverless Exception]:', fatalErr);
+    if (!res.headersSent) {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: fatalErr?.message || 'Server initialization error', success: false }));
     }
-
-    // Preserve query parameters except the internal 'endpoint'
-    let queryString = '';
-    const qIndex = req.url.indexOf('?');
-    if (qIndex !== -1) {
-      const searchParams = new URLSearchParams(req.url.slice(qIndex + 1));
-      searchParams.delete('endpoint');
-      const qs = searchParams.toString();
-      if (qs) queryString = `?${qs}`;
-    }
-
-    // Normalize req.url and req.originalUrl so Express routing works whether matched on '/api' or '/'
-    const finalPath = pathPart ? `/api${pathPart}${queryString}` : `/api${queryString}`;
-    req.url = finalPath;
-    (req as any).originalUrl = finalPath;
-
-    return cachedApp(req, res);
-  } catch (err: any) {
-    console.error('Serverless invocation error:', err);
-    return res.status(500).json({ error: 'Server initialization error', details: err?.message || String(err) });
   }
 }
 

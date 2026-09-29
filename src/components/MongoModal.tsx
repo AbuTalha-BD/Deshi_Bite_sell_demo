@@ -28,16 +28,12 @@ export const MongoModal: React.FC = () => {
   if (!isMongoModalOpen) return null;
 
   const handleConnect = async () => {
-    let cleanUri = inputUri.trim();
-    if (!cleanUri) {
+    if (!inputUri.trim()) {
       showToast('Please enter your MongoDB connection string (URI)', 'error');
       return;
     }
-    if (!cleanUri.startsWith('mongodb://') && !cleanUri.startsWith('mongodb+srv://')) {
-      cleanUri = `mongodb+srv://${cleanUri}`;
-    }
     setIsConnecting(true);
-    const res = await connectMongo(cleanUri);
+    const res = await connectMongo(inputUri.trim());
     setIsConnecting(false);
     if (res.success) {
       setInputUri('');

@@ -20,6 +20,7 @@ export const SellModal: React.FC = () => {
     setIsSellModalOpen,
     currentUser,
     products,
+    users,
     createSale,
     setSelectedSaleForInvoice,
     setIsInvoiceModalOpen,
@@ -42,11 +43,12 @@ export const SellModal: React.FC = () => {
   // Cart / Items
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
 
-  // Customer Info (Optional)
+  // Customer Info & Assignment (Optional)
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [discount, setDiscount] = useState<number>(0);
+  const [assignedAgentId, setAssignedAgentId] = useState<string>('');
 
   // Confirmation state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -136,8 +138,22 @@ export const SellModal: React.FC = () => {
     setSelectedProduct(prod);
 
     const defaultUnit = getProductUnit(prod);
-    setSelectedUnit(defaultUnit);
-    if (defaultUnit === 'KG') {
+    const hasKgAvailable = hasKgRate && availableKg > 0;
+    const hasPcsAvailable = hasPcsRate && availablePcs > 0;
+
+    let chosenUnit: UnitType = defaultUnit;
+    if (hasPcsAvailable && !hasKgAvailable) {
+      chosenUnit = 'PCS';
+    } else if (hasKgAvailable && !hasPcsAvailable) {
+      chosenUnit = 'KG';
+    } else if (hasKgRate && hasKgAvailable) {
+      chosenUnit = 'KG';
+    } else if (hasPcsRate && hasPcsAvailable) {
+      chosenUnit = 'PCS';
+    }
+
+    setSelectedUnit(chosenUnit);
+    if (chosenUnit === 'KG') {
       setQuantity(Math.min(1, Math.max(1, availableKg)));
     } else {
       setQuantity(Math.min(10, Math.max(1, availablePcs)));
@@ -257,6 +273,7 @@ export const SellModal: React.FC = () => {
       customerPhone: customerPhone || '',
       customerAddress: customerAddress || '',
       discount: Number(discount) || 0,
+      agentId: assignedAgentId || currentUser?.id,
     });
 
     setIsSubmitting(false);
@@ -736,9 +753,32 @@ export const SellModal: React.FC = () => {
 
           {/* CUSTOMER INFORMATION (OPTIONAL) */}
           <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/40 space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
-              CUSTOMER INFORMATION (OPTIONAL)
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
+              CUSTOMER & SELLER INFORMATION (OPTIONAL)
             </span>
+
+            {currentUser?.role === 'ADMIN' && (
+              <div className="mb-2">
+                <label className="block text-[11px] font-bold text-purple-900 uppercase tracking-wider mb-1">
+                  Assign to Executive (Optional):
+                </label>
+                <select
+                  value={assignedAgentId}
+                  onChange={(e) => setAssignedAgentId(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-purple-200 focus:outline-hidden focus:border-purple-600 bg-white font-medium text-slate-800"
+                >
+                  <option value="">Direct Admin Sale (ক্যাশ কাউন্টার / ফ্যাক্টরি সেলস)</option>
+                  {(users || [])
+                    .filter((u) => u.role === 'AGENT' && u.status === 'ACTIVE')
+                    .map((ag) => (
+                      <option key={ag.id} value={ag.id}>
+                        {ag.name} ({ag.phone}) — বকেয়া বাকি: ৳{(ag.currentDue || 0).toLocaleString()}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <input
