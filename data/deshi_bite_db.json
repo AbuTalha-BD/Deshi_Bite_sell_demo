@@ -183,60 +183,15 @@
       "passwordHash": "123456",
       "role": "AGENT",
       "status": "ACTIVE",
-      "totalSales": 500,
+      "totalSales": 0,
       "totalPaid": 0,
-      "currentDue": 500,
+      "currentDue": 0,
       "address": "",
       "joinedDate": "17 September 2026"
     }
   ],
-  "sales": [
-    {
-      "id": "SALE-1790695808127-1",
-      "invoiceNo": "DB-20260929-00001",
-      "agentId": "AGENT-0003",
-      "agentName": "Toha Jamil",
-      "customerName": "Customer Test",
-      "customerPhone": "",
-      "customerAddress": "",
-      "saleType": "RETAIL",
-      "items": [
-        {
-          "productId": "PROD-1012",
-          "productName": "Special Testing Pickle 500g",
-          "unit": "PCS",
-          "quantity": 2,
-          "unitPrice": 250,
-          "subtotal": 500
-        }
-      ],
-      "subtotal": 500,
-      "discount": 0,
-      "grandTotal": 500,
-      "paymentStatus": "UNPAID",
-      "createdAtDate": "29 September 2026",
-      "createdAtTime": "09:30 PM",
-      "timestamp": 1790695808127
-    }
-  ],
+  "sales": [],
   "stockTransactions": [
-    {
-      "id": "STX-1790695808127-192",
-      "productId": "PROD-1012",
-      "productName": "Special Testing Pickle 500g",
-      "type": "SALE_OUT",
-      "quantity": 2,
-      "unit": "PCS",
-      "referenceNote": "Deducted via Sale DB-20260929-00001",
-      "recordedBy": "Toha Jamil",
-      "date": "29 September 2026",
-      "time": "09:30 PM",
-      "createdAtDate": "29 September 2026",
-      "createdAtTime": "09:30 PM",
-      "timestamp": 1790695808127,
-      "stockBefore": 50,
-      "stockAfter": 48
-    },
     {
       "id": "STX-1790695808123",
       "productId": "PROD-1012",
@@ -248,7 +203,9 @@
       "recordedBy": "Admin Manager",
       "date": "29 September 2026",
       "time": "09:30 PM",
-      "timestamp": 1790695808098
+      "timestamp": 1790695808098,
+      "createdAtDate": "29 September 2026",
+      "createdAtTime": "09:30 PM"
     }
   ],
   "payments": [],
@@ -258,7 +215,7 @@
       "title": "Payment Received & Due Updated",
       "message": "Admin recorded payment of ৳4,120. Your remaining due is now ৳0.",
       "type": "SUCCESS",
-      "isRead": false,
+      "isRead": true,
       "date": "23 September 2026",
       "time": "07:39 PM",
       "targetRole": "AGENT",

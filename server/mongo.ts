@@ -51,37 +51,71 @@ export function getWritableDataDir(): string {
 
 const CONFIG_FILE = path.join(getWritableDataDir(), 'mongo_config.json');
 
+// Helper to determine the best available MongoDB URI
+function resolveConfiguredUri(): string {
+  // 1. Check saved config file from previous successful connection
+  try {
+    const possibleConfigFiles = [
+      CONFIG_FILE,
+      path.join(process.cwd(), 'data', 'mongo_config.json'),
+      path.join('/tmp', 'deshi_bite_data', 'mongo_config.json'),
+    ];
+    for (const cf of possibleConfigFiles) {
+      if (fs.existsSync(cf)) {
+        const raw = fs.readFileSync(cf, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (parsed.uri && typeof parsed.uri === 'string' && parsed.uri.trim() !== '') {
+          return parsed.uri.trim();
+        }
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // 2. Check .env file directly (most explicit by developer/user)
+  try {
+    const envFile = path.join(process.cwd(), '.env');
+    if (fs.existsSync(envFile)) {
+      const content = fs.readFileSync(envFile, 'utf-8');
+      const match = content.match(/^MONGODB_URI=(.+)$/m);
+      if (match && match[1] && !match[1].startsWith('your_') && match[1].trim() !== '') {
+        return match[1].trim();
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // 3. Check environment variable
+  if (process.env.MONGODB_URI && !process.env.MONGODB_URI.startsWith('your_') && process.env.MONGODB_URI.trim() !== '') {
+    return process.env.MONGODB_URI.trim();
+  }
+
+  // 4. Fallback to .env.example
+  try {
+    const exampleFile = path.join(process.cwd(), '.env.example');
+    if (fs.existsSync(exampleFile)) {
+      const content = fs.readFileSync(exampleFile, 'utf-8');
+      const match = content.match(/^MONGODB_URI=(.+)$/m);
+      if (match && match[1] && !match[1].startsWith('your_') && match[1].trim() !== '') {
+        return match[1].trim();
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return '';
+}
+
 // Memory references
 let client: MongoClient | null = null;
 let db: Db | null = null;
 let isConnected = false;
 let lastError: string | null = null;
-let activeUri: string = process.env.MONGODB_URI || '';
+let activeUri: string = resolveConfiguredUri();
 let DB_NAME = process.env.MONGODB_DB_NAME || 'deshi_bite';
-
-// If DB_NAME or activeUri is still default/empty, inspect .env and .env.example files
-try {
-  const envPaths = [path.join(process.cwd(), '.env'), path.join(process.cwd(), '.env.example')];
-  for (const envPath of envPaths) {
-    if (fs.existsSync(envPath)) {
-      const content = fs.readFileSync(envPath, 'utf-8');
-      if (!process.env.MONGODB_DB_NAME) {
-        const matchDb = content.match(/^MONGODB_DB_NAME=(.+)$/m);
-        if (matchDb && matchDb[1] && matchDb[1].trim() !== '') {
-          DB_NAME = matchDb[1].trim();
-        }
-      }
-      if (!activeUri) {
-        const matchUri = content.match(/^MONGODB_URI=(.+)$/m);
-        if (matchUri && matchUri[1] && !matchUri[1].startsWith('your_') && matchUri[1].trim() !== '') {
-          activeUri = matchUri[1].trim();
-        }
-      }
-    }
-  }
-} catch (e) {
-  // ignore
-}
 
 // Load saved URI if exists from writable config or /tmp fallback
 try {
@@ -201,11 +235,12 @@ export async function connectMongo(customUri?: string): Promise<{ success: boole
       // ignore
     }
     
-    // Connect with 6-second timeout to fit within Vercel serverless function limits
+    // Connect with optimized options for cloud environments and serverless (Vercel, container)
     client = new MongoClient(uriToUse, {
-      serverSelectionTimeoutMS: 6000,
-      connectTimeoutMS: 6000,
+      serverSelectionTimeoutMS: 8000,
+      connectTimeoutMS: 8000,
       retryWrites: true,
+      tls: true,
     });
 
     await client.connect();
